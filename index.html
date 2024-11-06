@@ -60,11 +60,12 @@
                 <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input"/>
                 <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input"/>
                 <input v-model="newRevenue" placeholder="Revenue" type="number" step="0.01" class="input"/>
+                <input v-model="newDescription" placeholder="Description" class="input"/>
                 <button type="submit" class="btn-primary">Add Schedule</button>
             </form>
             <ul>
                 <li v-for="schedule in scheduleList" :key="schedule.id" class="border-b py-2">
-                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - Revenue: {{ schedule.revenue }}
+                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }}
                 </li>
             </ul>
         </div>
@@ -94,7 +95,8 @@
                     newDate: '',
                     newShiftStart: '',
                     newShiftEnd: '',
-                    newRevenue: ''
+                    newRevenue: '',
+                    newDescription: '' // Новое поле для описания
                 };
             },
             methods: {
@@ -147,12 +149,14 @@
                         date: this.newDate,
                         shift_start: this.newShiftStart,
                         shift_end: this.newShiftEnd,
-                        revenue: this.newRevenue
+                        revenue: this.newRevenue,
+                        description: this.newDescription // Сохранение описания
                     });
                     this.newDate = '';
                     this.newShiftStart = '';
                     this.newShiftEnd = '';
                     this.newRevenue = '';
+                    this.newDescription = '';
                 }
             },
             mounted() {
