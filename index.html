@@ -18,19 +18,27 @@
             <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
         </nav>
         
+        <!-- Staff Schedule Section -->
+        <div v-if="currentView === 'StaffSchedule'">
+            <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
+            <form @submit.prevent="createStaffSchedule" class="mb-4">
+                <input v-model="newJobTitle" placeholder="Job Title" class="input"/>
+                <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
+                <input v-model="newBonus" placeholder="Bonus" type="number" step="0.01" class="input"/>
+                <input v-model="newDescription" placeholder="Description" class="input"/>
+                <button type="submit" class="btn-primary">Add Schedule</button>
+            </form>
+            <ul>
+                <li v-for="schedule in schedules" :key="schedule.id" class="border-b py-2">
+                    {{ schedule.job_title }} - Rate: {{ schedule.rate }} - Bonus: {{ schedule.bonus }} - {{ schedule.description }}
+                </li>
+            </ul>
+        </div>
+
         <!-- Staff Section -->
         <div v-if="currentView === 'Staff'">
             <h2 class="text-xl font-semibold mb-2">Staff</h2>
             <form @submit.prevent="createStaff" class="mb-4">
-                <!-- Выпадающий список для выбора job_title из StaffSchedule -->
-                <label for="staffSchedule" class="block mb-2">Job Title</label>
-                <select v-model="newStaffScheduleId" :disabled="staffScheduleOptions.length === 0" class="input mb-4">
-                    <option disabled value="">Select Job Title</option>
-                    <option v-for="schedule in staffScheduleOptions" :key="schedule.id" :value="schedule.id">
-                        {{ schedule.job_title }}
-                    </option>
-                </select>
-
                 <input v-model="newFullName" placeholder="Full Name" class="input"/>
                 <input v-model="newDateOfHiring" placeholder="Date of Hiring" type="date" class="input"/>
                 <input v-model="newStatus" placeholder="Status" class="input"/>
@@ -43,6 +51,24 @@
                 </li>
             </ul>
         </div>
+
+        <!-- Schedule Section -->
+        <div v-if="currentView === 'Schedule'">
+            <h2 class="text-xl font-semibold mb-2">Schedule</h2>
+            <form @submit.prevent="createSchedule" class="mb-4">
+                <input v-model="newDate" placeholder="Date" type="date" class="input"/>
+                <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input"/>
+                <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input"/>
+                <input v-model="newRevenue" placeholder="Revenue" type="number" step="0.01" class="input"/>
+                <input v-model="newDescription" placeholder="Description" class="input"/>
+                <button type="submit" class="btn-primary">Add Schedule</button>
+            </form>
+            <ul>
+                <li v-for="schedule in scheduleList" :key="schedule.id" class="border-b py-2">
+                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }}
+                </li>
+            </ul>
+        </div>
     </div>
 
     <script>
@@ -51,19 +77,49 @@
         createApp({
             data() {
                 return {
-                    currentView: 'Staff',
+                    currentView: 'StaffSchedule',
+                    // StaffSchedule data
+                    schedules: [],
+                    newJobTitle: '',
+                    newRate: '',
+                    newBonus: '',
+                    newDescription: '',
                     // Staff data
                     staffList: [],
-                    newStaffScheduleId: '',
                     newFullName: '',
                     newDateOfHiring: '',
                     newStatus: '',
                     newStaffDescription: '',
-                    // StaffSchedule options for dropdown
-                    staffScheduleOptions: []
+                    // Schedule data
+                    scheduleList: [],
+                    newDate: '',
+                    newShiftStart: '',
+                    newShiftEnd: '',
+                    newRevenue: '',
+                    newDescription: '' // Новое поле для описания
                 };
             },
             methods: {
+                // Methods for StaffSchedule
+                fetchSchedules() {
+                    // Код для получения данных из API
+                },
+                createStaffSchedule() {
+                    // Добавление записи в StaffSchedule
+                    this.schedules.push({
+                        id: Date.now(),
+                        job_title: this.newJobTitle,
+                        rate: this.newRate,
+                        bonus: this.newBonus,
+                        description: this.newDescription
+                    });
+                    this.newJobTitle = '';
+                    this.newRate = '';
+                    this.newBonus = '';
+                    this.newDescription = '';
+                },
+                
+                // Methods for Staff
                 fetchStaff() {
                     // Код для получения данных из API
                 },
@@ -71,29 +127,42 @@
                     // Добавление записи в Staff
                     this.staffList.push({
                         id: Date.now(),
-                        staff_schedule_id: this.newStaffScheduleId,
                         full_name: this.newFullName,
                         date_of_hiring: this.newDateOfHiring,
                         status: this.newStatus,
                         description: this.newStaffDescription
                     });
-                    this.newStaffScheduleId = '';
                     this.newFullName = '';
                     this.newDateOfHiring = '';
                     this.newStatus = '';
                     this.newStaffDescription = '';
                 },
-                fetchStaffScheduleOptions() {
-                    // Пример статических данных для StaffSchedule
-                    this.staffScheduleOptions = [
-                        { id: 1, job_title: "Barista" },
-                        { id: 2, job_title: "Manager" }
-                    ];
+
+                // Methods for Schedule
+                fetchSchedule() {
+                    // Код для получения данных из API
+                },
+                createSchedule() {
+                    // Добавление записи в Schedule
+                    this.scheduleList.push({
+                        id: Date.now(),
+                        date: this.newDate,
+                        shift_start: this.newShiftStart,
+                        shift_end: this.newShiftEnd,
+                        revenue: this.newRevenue,
+                        description: this.newDescription // Сохранение описания
+                    });
+                    this.newDate = '';
+                    this.newShiftStart = '';
+                    this.newShiftEnd = '';
+                    this.newRevenue = '';
+                    this.newDescription = '';
                 }
             },
             mounted() {
+                this.fetchSchedules();
                 this.fetchStaff();
-                this.fetchStaffScheduleOptions();
+                this.fetchSchedule();
             }
         }).mount('#app');
     </script>
