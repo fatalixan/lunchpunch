@@ -18,44 +18,26 @@
             <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
         </nav>
         
-        <!-- Staff Schedule Section -->
-        <div v-if="currentView === 'StaffSchedule'">
-            <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
-            <form @submit.prevent="createStaffSchedule" class="mb-4">
-                <input v-model="newJobTitle" placeholder="Job Title" class="input"/>
-                <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
-                <input v-model="newBonus" placeholder="Bonus" type="number" step="0.01" class="input"/>
-                <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">Add Schedule</button>
-            </form>
-            <ul>
-                <li v-for="schedule in schedules" :key="schedule.id" class="border-b py-2">
-                    {{ schedule.job_title }} - Rate: {{ schedule.rate }} - Bonus: {{ schedule.bonus }} - {{ schedule.description }}
-                </li>
-            </ul>
-        </div>
-
-        <!-- Staff Section -->
-        <div v-if="currentView === 'Staff'">
-            <h2 class="text-xl font-semibold mb-2">Staff</h2>
-            <form @submit.prevent="createStaff" class="mb-4">
-                <input v-model="newFullName" placeholder="Full Name" class="input"/>
-                <input v-model="newDateOfHiring" placeholder="Date of Hiring" type="date" class="input"/>
-                <input v-model="newStatus" placeholder="Status" class="input"/>
-                <input v-model="newStaffDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">Add Staff</button>
-            </form>
-            <ul>
-                <li v-for="staff in staffList" :key="staff.id" class="border-b py-2">
-                    {{ staff.full_name }} - Hired: {{ staff.date_of_hiring }} - Status: {{ staff.status }} - {{ staff.description }}
-                </li>
-            </ul>
-        </div>
-
-        <!-- Schedule Section -->
+        <!-- Schedule Section with Foreign Key Dropdowns -->
         <div v-if="currentView === 'Schedule'">
             <h2 class="text-xl font-semibold mb-2">Schedule</h2>
             <form @submit.prevent="createSchedule" class="mb-4">
+                <label for="staff" class="block mb-2">Staff</label>
+                <select v-model="newStaffId" class="input mb-4">
+                    <option disabled value="">Select Staff</option>
+                    <option v-for="staff in staffOptions" :key="staff.id" :value="staff.id">
+                        {{ staff.full_name }}
+                    </option>
+                </select>
+
+                <label for="coffeeShop" class="block mb-2">Coffee Shop</label>
+                <select v-model="newCoffeeShopId" class="input mb-4">
+                    <option disabled value="">Select Coffee Shop</option>
+                    <option v-for="shop in coffeeShopOptions" :key="shop.id" :value="shop.id">
+                        {{ shop.name }}
+                    </option>
+                </select>
+
                 <input v-model="newDate" placeholder="Date" type="date" class="input"/>
                 <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input"/>
                 <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input"/>
@@ -65,7 +47,9 @@
             </form>
             <ul>
                 <li v-for="schedule in scheduleList" :key="schedule.id" class="border-b py-2">
-                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }}
+                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - 
+                    Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }} - 
+                    Staff: {{ getStaffName(schedule.staff_id) }} - Coffee Shop: {{ getCoffeeShopName(schedule.coffee_shop_id) }}
                 </li>
             </ul>
         </div>
@@ -77,68 +61,22 @@
         createApp({
             data() {
                 return {
-                    currentView: 'StaffSchedule',
-                    // StaffSchedule data
-                    schedules: [],
-                    newJobTitle: '',
-                    newRate: '',
-                    newBonus: '',
-                    newDescription: '',
-                    // Staff data
-                    staffList: [],
-                    newFullName: '',
-                    newDateOfHiring: '',
-                    newStatus: '',
-                    newStaffDescription: '',
+                    currentView: 'Schedule',
                     // Schedule data
                     scheduleList: [],
+                    newStaffId: '',
+                    newCoffeeShopId: '',
                     newDate: '',
                     newShiftStart: '',
                     newShiftEnd: '',
                     newRevenue: '',
-                    newDescription: '' // Новое поле для описания
+                    newDescription: '',
+                    // Options for dropdowns
+                    staffOptions: [],
+                    coffeeShopOptions: []
                 };
             },
             methods: {
-                // Methods for StaffSchedule
-                fetchSchedules() {
-                    // Код для получения данных из API
-                },
-                createStaffSchedule() {
-                    // Добавление записи в StaffSchedule
-                    this.schedules.push({
-                        id: Date.now(),
-                        job_title: this.newJobTitle,
-                        rate: this.newRate,
-                        bonus: this.newBonus,
-                        description: this.newDescription
-                    });
-                    this.newJobTitle = '';
-                    this.newRate = '';
-                    this.newBonus = '';
-                    this.newDescription = '';
-                },
-                
-                // Methods for Staff
-                fetchStaff() {
-                    // Код для получения данных из API
-                },
-                createStaff() {
-                    // Добавление записи в Staff
-                    this.staffList.push({
-                        id: Date.now(),
-                        full_name: this.newFullName,
-                        date_of_hiring: this.newDateOfHiring,
-                        status: this.newStatus,
-                        description: this.newStaffDescription
-                    });
-                    this.newFullName = '';
-                    this.newDateOfHiring = '';
-                    this.newStatus = '';
-                    this.newStaffDescription = '';
-                },
-
-                // Methods for Schedule
                 fetchSchedule() {
                     // Код для получения данных из API
                 },
@@ -150,19 +88,45 @@
                         shift_start: this.newShiftStart,
                         shift_end: this.newShiftEnd,
                         revenue: this.newRevenue,
-                        description: this.newDescription // Сохранение описания
+                        description: this.newDescription,
+                        staff_id: this.newStaffId,
+                        coffee_shop_id: this.newCoffeeShopId
                     });
+                    this.newStaffId = '';
+                    this.newCoffeeShopId = '';
                     this.newDate = '';
                     this.newShiftStart = '';
                     this.newShiftEnd = '';
                     this.newRevenue = '';
                     this.newDescription = '';
+                },
+                getStaffName(id) {
+                    const staff = this.staffOptions.find(staff => staff.id === id);
+                    return staff ? staff.full_name : 'Unknown';
+                },
+                getCoffeeShopName(id) {
+                    const shop = this.coffeeShopOptions.find(shop => shop.id === id);
+                    return shop ? shop.name : 'Unknown';
+                },
+                fetchStaffOptions() {
+                    // Пример статических данных для Staff
+                    this.staffOptions = [
+                        { id: 1, full_name: "John Doe" },
+                        { id: 2, full_name: "Jane Smith" }
+                    ];
+                },
+                fetchCoffeeShopOptions() {
+                    // Пример статических данных для CoffeeShop
+                    this.coffeeShopOptions = [
+                        { id: 1, name: "Central Perk" },
+                        { id: 2, name: "Java Cafe" }
+                    ];
                 }
             },
             mounted() {
-                this.fetchSchedules();
-                this.fetchStaff();
                 this.fetchSchedule();
+                this.fetchStaffOptions();
+                this.fetchCoffeeShopOptions();
             }
         }).mount('#app');
     </script>
