@@ -1,10 +1,9 @@
 <?php
-
 require 'database.php';
 
 header("Content-Type: application/json");
 
-// Убедимся, что метод запроса поддерживается
+// Получаем метод запроса и параметры
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $entity = isset($_GET['entity']) ? $_GET['entity'] : null;
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
@@ -12,7 +11,7 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 // Подключаемся к базе данных
 $pdo = connectDatabase();
 
-// Проверка сущности (таблицы) и выполнение CRUD
+// Проверяем сущность и выполняем нужные CRUD-операции
 switch ($entity) {
     case 'staff_schedule':
         handleStaffSchedule($requestMethod, $pdo, $id);
@@ -27,6 +26,7 @@ switch ($entity) {
         echo json_encode(["error" => "Invalid entity specified"]);
 }
 
+// CRUD для StaffSchedule
 function handleStaffSchedule($method, $pdo, $id) {
     switch ($method) {
         case 'GET':
@@ -56,6 +56,7 @@ function handleStaffSchedule($method, $pdo, $id) {
     }
 }
 
+// CRUD для Staff
 function handleStaff($method, $pdo, $id) {
     switch ($method) {
         case 'GET':
@@ -85,6 +86,7 @@ function handleStaff($method, $pdo, $id) {
     }
 }
 
+// CRUD для Schedule
 function handleSchedule($method, $pdo, $id) {
     switch ($method) {
         case 'GET':

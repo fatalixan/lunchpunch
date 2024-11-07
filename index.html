@@ -107,8 +107,12 @@
                 // CRUD operations for StaffSchedule
                 fetchStaffSchedule() {
                     fetch('api.php?entity=staff_schedule')
-                        .then(response => response.json())
-                        .then(data => { this.schedules = data; });
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => { this.schedules = data; })
+                        .catch(error => console.error('Fetch error:', error));
                 },
                 createStaffSchedule() {
                     fetch('api.php?entity=staff_schedule', {
@@ -126,18 +130,23 @@
                         this.newRate = '';
                         this.newBonus = '';
                         this.newDescription = '';
-                    });
+                    }).catch(error => console.error('Create error:', error));
                 },
                 deleteStaffSchedule(id) {
                     fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchStaffSchedule());
+                        .then(() => this.fetchStaffSchedule())
+                        .catch(error => console.error('Delete error:', error));
                 },
                 
                 // CRUD operations for Staff
                 fetchStaff() {
                     fetch('api.php?entity=staff')
-                        .then(response => response.json())
-                        .then(data => { this.staffList = data; });
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => { this.staffList = data; })
+                        .catch(error => console.error('Fetch error:', error));
                 },
                 createStaff() {
                     fetch('api.php?entity=staff', {
@@ -155,18 +164,23 @@
                         this.newDateOfHiring = '';
                         this.newStatus = '';
                         this.newStaffDescription = '';
-                    });
+                    }).catch(error => console.error('Create error:', error));
                 },
                 deleteStaff(id) {
                     fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchStaff());
+                        .then(() => this.fetchStaff())
+                        .catch(error => console.error('Delete error:', error));
                 },
 
                 // CRUD operations for Schedule
                 fetchSchedule() {
                     fetch('api.php?entity=schedule')
-                        .then(response => response.json())
-                        .then(data => { this.scheduleList = data; });
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => { this.scheduleList = data; })
+                        .catch(error => console.error('Fetch error:', error));
                 },
                 createSchedule() {
                     fetch('api.php?entity=schedule', {
@@ -186,11 +200,12 @@
                         this.newShiftEnd = '';
                         this.newRevenue = '';
                         this.newDescription = '';
-                    });
+                    }).catch(error => console.error('Create error:', error));
                 },
                 deleteSchedule(id) {
                     fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchSchedule());
+                        .then(() => this.fetchSchedule())
+                        .catch(error => console.error('Delete error:', error));
                 }
             },
             mounted() {

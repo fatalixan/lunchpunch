@@ -1,20 +1,21 @@
 <?php
-    // database.php
-    function connectDatabase() {
-        $host = 'localhost';
-        $dbname = 'coffee_shop_db';
-        $user = 'your_username';
-        $password = 'your_password';
-    
-        try {
-            $pdo = new PDO("pgsql:host=$host;dbname=$dbname", $user, $password);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        } catch (PDOException $e) {
-            echo "Connection failed: " . $e->getMessage();
-            exit();
-        }
-    }
-?>
-    
+// database.php
 
+function connectDatabase() {
+    // Параметры подключения к базе данных
+    $host = 'localhost';
+    $dbname = 'c90922_dalbadabl_ru';
+    $user = 'c90922_dalbadabl_ru'; // замените на имя пользователя вашей базы данных
+    $password = 'KuCfoFupzojuj41'; // замените на пароль вашей базы данных
+
+    try {
+        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $pdo;
+    } catch (PDOException $e) {
+        // Ошибка подключения
+        echo json_encode(["error" => "Database connection failed: " . $e->getMessage()]);
+        exit();
+    }
+}
+?>
