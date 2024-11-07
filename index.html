@@ -31,6 +31,7 @@
             <ul>
                 <li v-for="schedule in schedules" :key="schedule.id" class="border-b py-2">
                     {{ schedule.job_title }} - Rate: {{ schedule.rate }} - Bonus: {{ schedule.bonus }} - {{ schedule.description }}
+                    <button @click="deleteStaffSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
                 </li>
             </ul>
         </div>
@@ -48,6 +49,7 @@
             <ul>
                 <li v-for="staff in staffList" :key="staff.id" class="border-b py-2">
                     {{ staff.full_name }} - Hired: {{ staff.date_of_hiring }} - Status: {{ staff.status }} - {{ staff.description }}
+                    <button @click="deleteStaff(staff.id)" class="text-red-500 ml-2">Delete</button>
                 </li>
             </ul>
         </div>
@@ -65,7 +67,9 @@
             </form>
             <ul>
                 <li v-for="schedule in scheduleList" :key="schedule.id" class="border-b py-2">
-                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }}
+                    Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - 
+                    Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }}
+                    <button @click="deleteSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
                 </li>
             </ul>
         </div>
@@ -96,71 +100,101 @@
                     newShiftStart: '',
                     newShiftEnd: '',
                     newRevenue: '',
-                    newDescription: '' // Новое поле для описания
+                    newDescription: ''
                 };
             },
             methods: {
-                // Methods for StaffSchedule
-                fetchSchedules() {
-                    // Код для получения данных из API
+                // CRUD operations for StaffSchedule
+                fetchStaffSchedule() {
+                    fetch('api.php?entity=staff_schedule')
+                        .then(response => response.json())
+                        .then(data => { this.schedules = data; });
                 },
                 createStaffSchedule() {
-                    // Добавление записи в StaffSchedule
-                    this.schedules.push({
-                        id: Date.now(),
-                        job_title: this.newJobTitle,
-                        rate: this.newRate,
-                        bonus: this.newBonus,
-                        description: this.newDescription
+                    fetch('api.php?entity=staff_schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            job_title: this.newJobTitle,
+                            rate: this.newRate,
+                            bonus: this.newBonus,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaffSchedule();
+                        this.newJobTitle = '';
+                        this.newRate = '';
+                        this.newBonus = '';
+                        this.newDescription = '';
                     });
-                    this.newJobTitle = '';
-                    this.newRate = '';
-                    this.newBonus = '';
-                    this.newDescription = '';
+                },
+                deleteStaffSchedule(id) {
+                    fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
+                        .then(() => this.fetchStaffSchedule());
                 },
                 
-                // Methods for Staff
+                // CRUD operations for Staff
                 fetchStaff() {
-                    // Код для получения данных из API
+                    fetch('api.php?entity=staff')
+                        .then(response => response.json())
+                        .then(data => { this.staffList = data; });
                 },
                 createStaff() {
-                    // Добавление записи в Staff
-                    this.staffList.push({
-                        id: Date.now(),
-                        full_name: this.newFullName,
-                        date_of_hiring: this.newDateOfHiring,
-                        status: this.newStatus,
-                        description: this.newStaffDescription
+                    fetch('api.php?entity=staff', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            full_name: this.newFullName,
+                            date_of_hiring: this.newDateOfHiring,
+                            status: this.newStatus,
+                            description: this.newStaffDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaff();
+                        this.newFullName = '';
+                        this.newDateOfHiring = '';
+                        this.newStatus = '';
+                        this.newStaffDescription = '';
                     });
-                    this.newFullName = '';
-                    this.newDateOfHiring = '';
-                    this.newStatus = '';
-                    this.newStaffDescription = '';
+                },
+                deleteStaff(id) {
+                    fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
+                        .then(() => this.fetchStaff());
                 },
 
-                // Methods for Schedule
+                // CRUD operations for Schedule
                 fetchSchedule() {
-                    // Код для получения данных из API
+                    fetch('api.php?entity=schedule')
+                        .then(response => response.json())
+                        .then(data => { this.scheduleList = data; });
                 },
                 createSchedule() {
-                    // Добавление записи в Schedule
-                    this.scheduleList.push({
-                        id: Date.now(),
-                        date: this.newDate,
-                        shift_start: this.newShiftStart,
-                        shift_end: this.newShiftEnd,
-                        revenue: this.newRevenue,
-                        description: this.newDescription // Сохранение описания
+                    fetch('api.php?entity=schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            date: this.newDate,
+                            shift_start: this.newShiftStart,
+                            shift_end: this.newShiftEnd,
+                            revenue: this.newRevenue,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchSchedule();
+                        this.newDate = '';
+                        this.newShiftStart = '';
+                        this.newShiftEnd = '';
+                        this.newRevenue = '';
+                        this.newDescription = '';
                     });
-                    this.newDate = '';
-                    this.newShiftStart = '';
-                    this.newShiftEnd = '';
-                    this.newRevenue = '';
-                    this.newDescription = '';
+                },
+                deleteSchedule(id) {
+                    fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
+                        .then(() => this.fetchSchedule());
                 }
             },
             mounted() {
-                this.fetchSchedules();
+                this.fetchStaffSchedule();
                 this.fetchStaff();
                 this.fetchSchedule();
             }
