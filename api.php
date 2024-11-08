@@ -22,6 +22,9 @@ switch ($entity) {
     case 'schedule':
         handleSchedule($requestMethod, $pdo, $id);
         break;
+    case 'coffee_shop':  // Новый блок для работы с CoffeeShop
+        handleCoffeeShop($requestMethod, $pdo, $id);
+        break;
     default:
         echo json_encode(["error" => "Invalid entity specified"]);
 }
@@ -108,6 +111,36 @@ function handleSchedule($method, $pdo, $id) {
             break;
         case 'DELETE':
             $stmt = $pdo->prepare("DELETE FROM Schedule WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(["success" => true]);
+            break;
+        default:
+            echo json_encode(["error" => "Method not allowed"]);
+    }
+}
+
+// CRUD для CoffeeShop
+function handleCoffeeShop($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            $stmt = $id ? $pdo->prepare("SELECT * FROM CoffeeShop WHERE id = ?") : $pdo->query("SELECT * FROM CoffeeShop");
+            $stmt->execute($id ? [$id] : []);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO CoffeeShop (name, address, description) VALUES (?, ?, ?)");
+            $stmt->execute([$data['name'], $data['address'], $data['description']]);
+            echo json_encode(["success" => true, "id" => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE CoffeeShop SET name = ?, address = ?, description = ? WHERE id = ?");
+            $stmt->execute([$data['name'], $data['address'], $data['description'], $id]);
+            echo json_encode(["success" => true]);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM CoffeeShop WHERE id = ?");
             $stmt->execute([$id]);
             echo json_encode(["success" => true]);
             break;

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coffee Shop Staff Management</title>
+    <!-- Подключение Vue.js и Tailwind CSS для создания динамического интерфейса -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3.2.33/dist/vue.global.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -11,16 +12,17 @@
     <div id="app" class="container mx-auto p-4">
         <h1 class="text-2xl font-bold text-center mb-4">Coffee Shop Staff Management</h1>
         
-        <!-- Навигация -->
+        <!-- Навигация между разделами для переключения между таблицами -->
         <nav class="flex justify-around mb-4">
             <button @click="currentView = 'StaffSchedule'" class="btn-nav">Staff Schedule</button>
             <button @click="currentView = 'Staff'" class="btn-nav">Staff</button>
             <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
         </nav>
         
-        <!-- Staff Schedule Section -->
+        <!-- Раздел Staff Schedule: Форма добавления и таблица с данными -->
         <div v-if="currentView === 'StaffSchedule'">
             <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
+            <!-- Форма добавления и редактирования записи в таблицу StaffSchedule -->
             <form @submit.prevent="isEditing ? updateStaffSchedule() : createStaffSchedule()" class="mb-4">
                 <input v-model="newJobTitle" placeholder="Job Title" class="input"/>
                 <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
@@ -30,7 +32,7 @@
                 <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
 
-            <!-- Таблица Staff Schedule -->
+            <!-- Таблица данных Staff Schedule с опциями для редактирования и удаления -->
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
@@ -56,9 +58,10 @@
             </table>
         </div>
 
-        <!-- Staff Section -->
+        <!-- Раздел Staff: Форма добавления и таблица с данными -->
         <div v-if="currentView === 'Staff'">
             <h2 class="text-xl font-semibold mb-2">Staff</h2>
+            <!-- Форма для добавления и редактирования записи в таблицу Staff -->
             <form @submit.prevent="isEditing ? updateStaff() : createStaff()" class="mb-4">
                 <label for="job_title" class="block mb-2">Job Title</label>
                 <select v-model="newStaffScheduleId" class="input mb-4">
@@ -75,11 +78,12 @@
                 <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
 
-            <!-- Таблица Staff -->
+            <!-- Таблица данных Staff с колонкой Job Title, редактирование и удаление записей -->
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
                         <th class="py-2 px-4 border-b">Full Name</th>
+                        <th class="py-2 px-4 border-b">Job Title</th>
                         <th class="py-2 px-4 border-b">Date of Hiring</th>
                         <th class="py-2 px-4 border-b">Status</th>
                         <th class="py-2 px-4 border-b">Description</th>
@@ -89,6 +93,7 @@
                 <tbody>
                     <tr v-for="staff in staffList" :key="staff.id">
                         <td class="py-2 px-4 border-b">{{ staff.full_name }}</td>
+                        <td class="py-2 px-4 border-b">{{ getJobTitle(staff.staff_schedule_id) }}</td>
                         <td class="py-2 px-4 border-b">{{ staff.date_of_hiring }}</td>
                         <td class="py-2 px-4 border-b">{{ staff.status }}</td>
                         <td class="py-2 px-4 border-b">{{ staff.description }}</td>
@@ -101,9 +106,10 @@
             </table>
         </div>
 
-        <!-- Schedule Section -->
+        <!-- Раздел Schedule: Форма добавления и таблица с данными -->
         <div v-if="currentView === 'Schedule'">
             <h2 class="text-xl font-semibold mb-2">Schedule</h2>
+            <!-- Форма для добавления и редактирования записи в таблицу Schedule -->
             <form @submit.prevent="isEditing ? updateSchedule() : createSchedule()" class="mb-4">
                 <label for="staff" class="block mb-2">Staff</label>
                 <select v-model="newStaffId" class="input mb-4">
@@ -113,6 +119,7 @@
                     </option>
                 </select>
                 <label for="coffee_shop" class="block mb-2">Coffee Shop</label>
+                <!-- Выпадающий список для выбора Coffee Shop -->
                 <select v-model="newCoffeeShopId" class="input mb-4">
                     <option disabled value="">Select Coffee Shop</option>
                     <option v-for="shop in coffeeShopOptions" :key="shop.id" :value="shop.id">
@@ -128,11 +135,12 @@
                 <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
 
-            <!-- Таблица Schedule -->
+            <!-- Таблица данных Schedule с колонкой Full Name, редактирование и удаление записей -->
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
                         <th class="py-2 px-4 border-b">Date</th>
+                        <th class="py-2 px-4 border-b">Full Name</th>
                         <th class="py-2 px-4 border-b">Shift Start</th>
                         <th class="py-2 px-4 border-b">Shift End</th>
                         <th class="py-2 px-4 border-b">Revenue</th>
@@ -143,6 +151,7 @@
                 <tbody>
                     <tr v-for="schedule in scheduleList" :key="schedule.id">
                         <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
+                        <td class="py-2 px-4 border-b">{{ getFullName(schedule.staff_id) }}</td>
                         <td class="py-2 px-4 border-b">{{ schedule.shift_start }}</td>
                         <td class="py-2 px-4 border-b">{{ schedule.shift_end }}</td>
                         <td class="py-2 px-4 border-b">{{ schedule.revenue }}</td>
@@ -163,13 +172,14 @@
         createApp({
             data() {
                 return {
-                    currentView: 'StaffSchedule',
-                    isEditing: false,
-                    editId: null,
+                    currentView: 'StaffSchedule', // Хранит текущее представление (StaffSchedule, Staff, Schedule)
+                    isEditing: false, // Указывает, находится ли форма в режиме редактирования
+                    editId: null, // ID редактируемой записи
+                    // Массивы данных для отображения в таблицах
                     schedules: [],
                     staffList: [],
                     scheduleList: [],
-                    // Variables for form input
+                    // Поля для заполнения формы добавления и редактирования
                     newJobTitle: '',
                     newRate: '',
                     newBonus: '',
@@ -185,67 +195,238 @@
                     newShiftStart: '',
                     newShiftEnd: '',
                     newRevenue: '',
+                    // Опции для выпадающих списков
                     staffScheduleOptions: [],
                     staffOptions: [],
                     coffeeShopOptions: []
                 };
             },
             methods: {
-                // Data fetch functions for each table
+                // Загрузка данных для каждой таблицы
                 fetchStaffSchedule() {
                     fetch('api.php?entity=staff_schedule')
                         .then(response => response.json())
-                        .then(data => { this.schedules = data; })
-                        .catch(error => console.error('Error fetching Staff Schedule:', error));
+                        .then(data => { this.schedules = data; });
                 },
                 fetchStaff() {
                     fetch('api.php?entity=staff')
                         .then(response => response.json())
-                        .then(data => { this.staffList = data; })
-                        .catch(error => console.error('Error fetching Staff:', error));
+                        .then(data => { this.staffList = data; });
                 },
                 fetchSchedule() {
                     fetch('api.php?entity=schedule')
                         .then(response => response.json())
-                        .then(data => { this.scheduleList = data; })
-                        .catch(error => console.error('Error fetching Schedule:', error));
+                        .then(data => { this.scheduleList = data; });
                 },
 
-                // Functions for CRUD operations and updating dropdown options
-                createStaffSchedule() { /* Create logic here */ },
-                editStaffSchedule(schedule) { /* Edit logic here */ },
-                updateStaffSchedule() { /* Update logic here */ },
-                deleteStaffSchedule(id) { /* Delete logic here */ },
-
-                createStaff() { /* Create logic here */ },
-                editStaff(staff) { /* Edit logic here */ },
-                updateStaff() { /* Update logic here */ },
-                deleteStaff(id) { /* Delete logic here */ },
-
-                createSchedule() { /* Create logic here */ },
-                editSchedule(schedule) { /* Edit logic here */ },
-                updateSchedule() { /* Update logic here */ },
-                deleteSchedule(id) { /* Delete logic here */ },
-
+                // Загрузка опций для выпадающих списков
                 fetchStaffScheduleOptions() {
                     fetch('api.php?entity=staff_schedule')
                         .then(response => response.json())
-                        .then(data => { this.staffScheduleOptions = data; })
-                        .catch(error => console.error('Error fetching Staff Schedule Options:', error));
+                        .then(data => { this.staffScheduleOptions = data; });
                 },
                 fetchStaffOptions() {
                     fetch('api.php?entity=staff')
                         .then(response => response.json())
-                        .then(data => { this.staffOptions = data; })
-                        .catch(error => console.error('Error fetching Staff Options:', error));
+                        .then(data => { this.staffOptions = data; });
                 },
                 fetchCoffeeShopOptions() {
                     fetch('api.php?entity=coffee_shop')
                         .then(response => response.json())
-                        .then(data => { this.coffeeShopOptions = data; })
-                        .catch(error => console.error('Error fetching Coffee Shop Options:', error));
+                        .then(data => { this.coffeeShopOptions = data; }); // Исправление: метод fetchCoffeeShopOptions загружает данные для Coffee Shop
+                },
+
+                // Получение Job Title и Full Name для отображения связанных данных
+                getJobTitle(staffScheduleId) {
+                    const schedule = this.staffScheduleOptions.find(s => s.id === staffScheduleId);
+                    return schedule ? schedule.job_title : '';
+                },
+                getFullName(staffId) {
+                    const staff = this.staffOptions.find(s => s.id === staffId);
+                    return staff ? staff.full_name : '';
+                },
+
+                // Функции для добавления записей в каждую таблицу
+                createStaffSchedule() {
+                    fetch('api.php?entity=staff_schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            job_title: this.newJobTitle,
+                            rate: this.newRate,
+                            bonus: this.newBonus,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaffSchedule(); // Обновление таблицы после добавления записи
+                        this.fetchStaffScheduleOptions(); // Обновление опций для выпадающего списка
+                        this.resetForm();
+                    });
+                },
+                createStaff() {
+                    fetch('api.php?entity=staff', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            staff_schedule_id: this.newStaffScheduleId,
+                            full_name: this.newFullName,
+                            date_of_hiring: this.newDateOfHiring,
+                            status: this.newStatus,
+                            description: this.newStaffDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaff();
+                        this.fetchStaffOptions();
+                        this.resetForm();
+                    });
+                },
+                createSchedule() {
+                    fetch('api.php?entity=schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            staff_id: this.newStaffId,
+                            coffee_shop_id: this.newCoffeeShopId,
+                            date: this.newDate,
+                            shift_start: this.newShiftStart,
+                            shift_end: this.newShiftEnd,
+                            revenue: this.newRevenue,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchSchedule();
+                        this.resetForm();
+                    });
+                },
+
+                // Функции для редактирования и обновления записей
+                editStaffSchedule(schedule) {
+                    this.isEditing = true;
+                    this.editId = schedule.id;
+                    this.newJobTitle = schedule.job_title;
+                    this.newRate = schedule.rate;
+                    this.newBonus = schedule.bonus;
+                    this.newDescription = schedule.description;
+                },
+                updateStaffSchedule() {
+                    fetch(`api.php?entity=staff_schedule&id=${this.editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            job_title: this.newJobTitle,
+                            rate: this.newRate,
+                            bonus: this.newBonus,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaffSchedule();
+                        this.fetchStaffScheduleOptions();
+                        this.resetForm();
+                    });
+                },
+
+                editStaff(staff) {
+                    this.isEditing = true;
+                    this.editId = staff.id;
+                    this.newStaffScheduleId = staff.staff_schedule_id;
+                    this.newFullName = staff.full_name;
+                    this.newDateOfHiring = staff.date_of_hiring;
+                    this.newStatus = staff.status;
+                    this.newStaffDescription = staff.description;
+                },
+                updateStaff() {
+                    fetch(`api.php?entity=staff&id=${this.editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            staff_schedule_id: this.newStaffScheduleId,
+                            full_name: this.newFullName,
+                            date_of_hiring: this.newDateOfHiring,
+                            status: this.newStatus,
+                            description: this.newStaffDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaff();
+                        this.fetchStaffOptions();
+                        this.resetForm();
+                    });
+                },
+
+                editSchedule(schedule) {
+                    this.isEditing = true;
+                    this.editId = schedule.id;
+                    this.newStaffId = schedule.staff_id;
+                    this.newCoffeeShopId = schedule.coffee_shop_id;
+                    this.newDate = schedule.date;
+                    this.newShiftStart = schedule.shift_start;
+                    this.newShiftEnd = schedule.shift_end;
+                    this.newRevenue = schedule.revenue;
+                    this.newDescription = schedule.description;
+                },
+                updateSchedule() {
+                    fetch(`api.php?entity=schedule&id=${this.editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            staff_id: this.newStaffId,
+                            coffee_shop_id: this.newCoffeeShopId,
+                            date: this.newDate,
+                            shift_start: this.newShiftStart,
+                            shift_end: this.newShiftEnd,
+                            revenue: this.newRevenue,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchSchedule();
+                        this.resetForm();
+                    });
+                },
+
+                // Функции для удаления записей
+                deleteStaffSchedule(id) {
+                    fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
+                        .then(() => {
+                            this.fetchStaffSchedule();
+                            this.fetchStaffScheduleOptions();
+                        });
+                },
+                deleteStaff(id) {
+                    fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
+                        .then(() => {
+                            this.fetchStaff();
+                            this.fetchStaffOptions();
+                        });
+                },
+                deleteSchedule(id) {
+                    fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
+                        .then(() => this.fetchSchedule());
+                },
+
+                // Сброс формы после добавления или обновления записи
+                resetForm() {
+                    this.isEditing = false;
+                    this.editId = null;
+                    this.newJobTitle = '';
+                    this.newRate = '';
+                    this.newBonus = '';
+                    this.newDescription = '';
+                    this.newStaffScheduleId = '';
+                    this.newFullName = '';
+                    this.newDateOfHiring = '';
+                    this.newStatus = '';
+                    this.newStaffDescription = '';
+                    this.newStaffId = '';
+                    this.newCoffeeShopId = '';
+                    this.newDate = '';
+                    this.newShiftStart = '';
+                    this.newShiftEnd = '';
+                    this.newRevenue = '';
+                },
+                cancelEdit() {
+                    this.resetForm();
                 }
             },
+            // Инициализация данных при загрузке приложения
             mounted() {
                 this.fetchStaffSchedule();
                 this.fetchStaff();
@@ -258,6 +439,7 @@
     </script>
 
     <style>
+        /* Стили для кнопок, полей ввода и таблиц */
         .input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; margin-right: 0.5rem; }
         .btn-primary { padding: 0.5rem 1rem; background-color: #1D4ED8; color: white; border-radius: 8px; cursor: pointer; }
         .btn-secondary { padding: 0.5rem 1rem; background-color: #6B7280; color: white; border-radius: 8px; cursor: pointer; }
