@@ -21,16 +21,18 @@
         <!-- Staff Schedule Section -->
         <div v-if="currentView === 'StaffSchedule'">
             <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
-            <form @submit.prevent="createStaffSchedule" class="mb-4">
+            <form @submit.prevent="isEditing ? updateStaffSchedule() : createStaffSchedule()" class="mb-4">
                 <input v-model="newJobTitle" placeholder="Job Title" class="input"/>
                 <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
                 <input v-model="newBonus" placeholder="Bonus" type="number" step="0.01" class="input"/>
                 <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">Add Schedule</button>
+                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Schedule' }}</button>
+                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
             <ul>
                 <li v-for="schedule in schedules" :key="schedule.id" class="border-b py-2">
                     {{ schedule.job_title }} - Rate: {{ schedule.rate }} - Bonus: {{ schedule.bonus }} - {{ schedule.description }}
+                    <button @click="editStaffSchedule(schedule)" class="text-blue-500 ml-2">Update</button>
                     <button @click="deleteStaffSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
                 </li>
             </ul>
@@ -39,16 +41,25 @@
         <!-- Staff Section -->
         <div v-if="currentView === 'Staff'">
             <h2 class="text-xl font-semibold mb-2">Staff</h2>
-            <form @submit.prevent="createStaff" class="mb-4">
+            <form @submit.prevent="isEditing ? updateStaff() : createStaff()" class="mb-4">
+                <label for="job_title" class="block mb-2">Job Title</label>
+                <select v-model="newStaffScheduleId" class="input mb-4">
+                    <option disabled value="">Select Job Title</option>
+                    <option v-for="schedule in staffScheduleOptions" :key="schedule.id" :value="schedule.id">
+                        {{ schedule.job_title }}
+                    </option>
+                </select>
                 <input v-model="newFullName" placeholder="Full Name" class="input"/>
                 <input v-model="newDateOfHiring" placeholder="Date of Hiring" type="date" class="input"/>
                 <input v-model="newStatus" placeholder="Status" class="input"/>
                 <input v-model="newStaffDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">Add Staff</button>
+                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Staff' }}</button>
+                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
             <ul>
                 <li v-for="staff in staffList" :key="staff.id" class="border-b py-2">
                     {{ staff.full_name }} - Hired: {{ staff.date_of_hiring }} - Status: {{ staff.status }} - {{ staff.description }}
+                    <button @click="editStaff(staff)" class="text-blue-500 ml-2">Update</button>
                     <button @click="deleteStaff(staff.id)" class="text-red-500 ml-2">Delete</button>
                 </li>
             </ul>
@@ -57,18 +68,34 @@
         <!-- Schedule Section -->
         <div v-if="currentView === 'Schedule'">
             <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-            <form @submit.prevent="createSchedule" class="mb-4">
+            <form @submit.prevent="isEditing ? updateSchedule() : createSchedule()" class="mb-4">
+                <label for="staff" class="block mb-2">Staff</label>
+                <select v-model="newStaffId" class="input mb-4">
+                    <option disabled value="">Select Staff</option>
+                    <option v-for="staff in staffOptions" :key="staff.id" :value="staff.id">
+                        {{ staff.full_name }}
+                    </option>
+                </select>
+                <label for="coffee_shop" class="block mb-2">Coffee Shop</label>
+                <select v-model="newCoffeeShopId" class="input mb-4">
+                    <option disabled value="">Select Coffee Shop</option>
+                    <option v-for="shop in coffeeShopOptions" :key="shop.id" :value="shop.id">
+                        {{ shop.name }}
+                    </option>
+                </select>
                 <input v-model="newDate" placeholder="Date" type="date" class="input"/>
                 <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input"/>
                 <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input"/>
                 <input v-model="newRevenue" placeholder="Revenue" type="number" step="0.01" class="input"/>
                 <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">Add Schedule</button>
+                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Schedule' }}</button>
+                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
             <ul>
                 <li v-for="schedule in scheduleList" :key="schedule.id" class="border-b py-2">
                     Date: {{ schedule.date }} - Shift Start: {{ schedule.shift_start }} - Shift End: {{ schedule.shift_end }} - 
                     Revenue: {{ schedule.revenue }} - Description: {{ schedule.description }}
+                    <button @click="editSchedule(schedule)" class="text-blue-500 ml-2">Update</button>
                     <button @click="deleteSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
                 </li>
             </ul>
@@ -82,6 +109,8 @@
             data() {
                 return {
                     currentView: 'StaffSchedule',
+                    isEditing: false,
+                    editId: null,
                     // StaffSchedule data
                     schedules: [],
                     newJobTitle: '',
@@ -90,29 +119,32 @@
                     newDescription: '',
                     // Staff data
                     staffList: [],
+                    newStaffScheduleId: '',
                     newFullName: '',
                     newDateOfHiring: '',
                     newStatus: '',
                     newStaffDescription: '',
                     // Schedule data
                     scheduleList: [],
+                    newStaffId: '',
+                    newCoffeeShopId: '',
                     newDate: '',
                     newShiftStart: '',
                     newShiftEnd: '',
                     newRevenue: '',
-                    newDescription: ''
+                    newDescription: '',
+                    // Dropdown options
+                    staffScheduleOptions: [],
+                    staffOptions: [],
+                    coffeeShopOptions: []
                 };
             },
             methods: {
-                // CRUD operations for StaffSchedule
+                // CRUD операции для StaffSchedule
                 fetchStaffSchedule() {
                     fetch('api.php?entity=staff_schedule')
-                        .then(response => {
-                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                            return response.json();
-                        })
-                        .then(data => { this.schedules = data; })
-                        .catch(error => console.error('Fetch error:', error));
+                        .then(response => response.json())
+                        .then(data => { this.schedules = data; });
                 },
                 createStaffSchedule() {
                     fetch('api.php?entity=staff_schedule', {
@@ -126,33 +158,49 @@
                         })
                     }).then(() => {
                         this.fetchStaffSchedule();
-                        this.newJobTitle = '';
-                        this.newRate = '';
-                        this.newBonus = '';
-                        this.newDescription = '';
-                    }).catch(error => console.error('Create error:', error));
+                        this.resetForm();
+                    });
+                },
+                editStaffSchedule(schedule) {
+                    this.isEditing = true;
+                    this.editId = schedule.id;
+                    this.newJobTitle = schedule.job_title;
+                    this.newRate = schedule.rate;
+                    this.newBonus = schedule.bonus;
+                    this.newDescription = schedule.description;
+                },
+                updateStaffSchedule() {
+                    fetch(`api.php?entity=staff_schedule&id=${this.editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            job_title: this.newJobTitle,
+                            rate: this.newRate,
+                            bonus: this.newBonus,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaffSchedule();
+                        this.resetForm();
+                    });
                 },
                 deleteStaffSchedule(id) {
                     fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchStaffSchedule())
-                        .catch(error => console.error('Delete error:', error));
+                        .then(() => this.fetchStaffSchedule());
                 },
-                
-                // CRUD operations for Staff
+
+                // CRUD операции для Staff
                 fetchStaff() {
                     fetch('api.php?entity=staff')
-                        .then(response => {
-                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                            return response.json();
-                        })
-                        .then(data => { this.staffList = data; })
-                        .catch(error => console.error('Fetch error:', error));
+                        .then(response => response.json())
+                        .then(data => { this.staffList = data; });
                 },
                 createStaff() {
                     fetch('api.php?entity=staff', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            staff_schedule_id: this.newStaffScheduleId,
                             full_name: this.newFullName,
                             date_of_hiring: this.newDateOfHiring,
                             status: this.newStatus,
@@ -160,33 +208,52 @@
                         })
                     }).then(() => {
                         this.fetchStaff();
-                        this.newFullName = '';
-                        this.newDateOfHiring = '';
-                        this.newStatus = '';
-                        this.newStaffDescription = '';
-                    }).catch(error => console.error('Create error:', error));
+                        this.resetForm();
+                    });
+                },
+                editStaff(staff) {
+                    this.isEditing = true;
+                    this.editId = staff.id;
+                    this.newStaffScheduleId = staff.staff_schedule_id;
+                    this.newFullName = staff.full_name;
+                    this.newDateOfHiring = staff.date_of_hiring;
+                    this.newStatus = staff.status;
+                    this.newStaffDescription = staff.description;
+                },
+                updateStaff() {
+                    fetch(`api.php?entity=staff&id=${this.editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            staff_schedule_id: this.newStaffScheduleId,
+                            full_name: this.newFullName,
+                            date_of_hiring: this.newDateOfHiring,
+                            status: this.newStatus,
+                            description: this.newStaffDescription
+                        })
+                    }).then(() => {
+                        this.fetchStaff();
+                        this.resetForm();
+                    });
                 },
                 deleteStaff(id) {
                     fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchStaff())
-                        .catch(error => console.error('Delete error:', error));
+                        .then(() => this.fetchStaff());
                 },
 
-                // CRUD operations for Schedule
+                // CRUD операции для Schedule
                 fetchSchedule() {
                     fetch('api.php?entity=schedule')
-                        .then(response => {
-                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                            return response.json();
-                        })
-                        .then(data => { this.scheduleList = data; })
-                        .catch(error => console.error('Fetch error:', error));
+                        .then(response => response.json())
+                        .then(data => { this.scheduleList = data; });
                 },
                 createSchedule() {
                     fetch('api.php?entity=schedule', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            staff_id: this.newStaffId,
+                            coffee_shop_id: this.newCoffeeShopId,
                             date: this.newDate,
                             shift_start: this.newShiftStart,
                             shift_end: this.newShiftEnd,
@@ -195,48 +262,100 @@
                         })
                     }).then(() => {
                         this.fetchSchedule();
-                        this.newDate = '';
-                        this.newShiftStart = '';
-                        this.newShiftEnd = '';
-                        this.newRevenue = '';
-                        this.newDescription = '';
-                    }).catch(error => console.error('Create error:', error));
+                        this.resetForm();
+                    });
+                },
+                editSchedule(schedule) {
+                    this.isEditing = true;
+                    this.editId = schedule.id;
+                    this.newStaffId = schedule.staff_id;
+                    this.newCoffeeShopId = schedule.coffee_shop_id;
+                    this.newDate = schedule.date;
+                    this.newShiftStart = schedule.shift_start;
+                    this.newShiftEnd = schedule.shift_end;
+                    this.newRevenue = schedule.revenue;
+                    this.newDescription = schedule.description;
+                },
+                updateSchedule() {
+                    fetch(`api.php?entity=schedule&id=${this.editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            staff_id: this.newStaffId,
+                            coffee_shop_id: this.newCoffeeShopId,
+                            date: this.newDate,
+                            shift_start: this.newShiftStart,
+                            shift_end: this.newShiftEnd,
+                            revenue: this.newRevenue,
+                            description: this.newDescription
+                        })
+                    }).then(() => {
+                        this.fetchSchedule();
+                        this.resetForm();
+                    });
                 },
                 deleteSchedule(id) {
                     fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchSchedule())
-                        .catch(error => console.error('Delete error:', error));
+                        .then(() => this.fetchSchedule());
+                },
+
+                // Dropdown data loading
+                fetchStaffScheduleOptions() {
+                    fetch('api.php?entity=staff_schedule')
+                        .then(response => response.json())
+                        .then(data => { this.staffScheduleOptions = data; });
+                },
+                fetchStaffOptions() {
+                    fetch('api.php?entity=staff')
+                        .then(response => response.json())
+                        .then(data => { this.staffOptions = data; });
+                },
+                fetchCoffeeShopOptions() {
+                    fetch('api.php?entity=coffee_shop')
+                        .then(response => response.json())
+                        .then(data => { this.coffeeShopOptions = data; });
+                },
+
+                resetForm() {
+                    this.isEditing = false;
+                    this.editId = null;
+                    this.newJobTitle = '';
+                    this.newRate = '';
+                    this.newBonus = '';
+                    this.newDescription = '';
+                    this.newStaffScheduleId = '';
+                    this.newFullName = '';
+                    this.newDateOfHiring = '';
+                    this.newStatus = '';
+                    this.newStaffDescription = '';
+                    this.newStaffId = '';
+                    this.newCoffeeShopId = '';
+                    this.newDate = '';
+                    this.newShiftStart = '';
+                    this.newShiftEnd = '';
+                    this.newRevenue = '';
+                    this.newDescription = '';
+                },
+                cancelEdit() {
+                    this.resetForm();
                 }
             },
             mounted() {
                 this.fetchStaffSchedule();
                 this.fetchStaff();
                 this.fetchSchedule();
+                this.fetchStaffScheduleOptions();
+                this.fetchStaffOptions();
+                this.fetchCoffeeShopOptions();
             }
         }).mount('#app');
     </script>
 
     <style>
-        .input {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-right: 0.5rem;
-        }
-        .btn-primary {
-            padding: 0.5rem 1rem;
-            background-color: #1D4ED8;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .btn-nav {
-            padding: 0.5rem 1rem;
-            border: 2px solid #1F2937;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; margin-right: 0.5rem; }
+        .btn-primary { padding: 0.5rem 1rem; background-color: #1D4ED8; color: white; border-radius: 8px; cursor: pointer; }
+        .btn-secondary { padding: 0.5rem 1rem; background-color: #6B7280; color: white; border-radius: 8px; cursor: pointer; }
+        .btn-nav { padding: 0.5rem 1rem; border: 2px solid #1F2937; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </body>
 </html>
