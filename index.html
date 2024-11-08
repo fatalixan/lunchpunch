@@ -158,6 +158,7 @@
                         })
                     }).then(() => {
                         this.fetchStaffSchedule();
+                        this.fetchStaffScheduleOptions();
                         this.resetForm();
                     });
                 },
@@ -181,12 +182,16 @@
                         })
                     }).then(() => {
                         this.fetchStaffSchedule();
+                        this.fetchStaffScheduleOptions();
                         this.resetForm();
                     });
                 },
                 deleteStaffSchedule(id) {
                     fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchStaffSchedule());
+                        .then(() => {
+                            this.fetchStaffSchedule();
+                            this.fetchStaffScheduleOptions();
+                        });
                 },
 
                 // CRUD операции для Staff
@@ -208,6 +213,7 @@
                         })
                     }).then(() => {
                         this.fetchStaff();
+                        this.fetchStaffOptions();
                         this.resetForm();
                     });
                 },
@@ -233,12 +239,16 @@
                         })
                     }).then(() => {
                         this.fetchStaff();
+                        this.fetchStaffOptions();
                         this.resetForm();
                     });
                 },
                 deleteStaff(id) {
                     fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchStaff());
+                        .then(() => {
+                            this.fetchStaff();
+                            this.fetchStaffOptions();
+                        });
                 },
 
                 // CRUD операции для Schedule
@@ -262,6 +272,8 @@
                         })
                     }).then(() => {
                         this.fetchSchedule();
+                        this.fetchStaffOptions();
+                        this.fetchCoffeeShopOptions();
                         this.resetForm();
                     });
                 },
@@ -291,12 +303,18 @@
                         })
                     }).then(() => {
                         this.fetchSchedule();
+                        this.fetchStaffOptions();
+                        this.fetchCoffeeShopOptions();
                         this.resetForm();
                     });
                 },
                 deleteSchedule(id) {
                     fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchSchedule());
+                        .then(() => {
+                            this.fetchSchedule();
+                            this.fetchStaffOptions();
+                            this.fetchCoffeeShopOptions();
+                        });
                 },
 
                 // Dropdown data loading
