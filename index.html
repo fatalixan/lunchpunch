@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coffee Shop Staff Management</title>
-    <!-- Подключение Vue.js и Tailwind CSS для создания динамического интерфейса -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3.2.33/dist/vue.global.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -12,17 +11,16 @@
     <div id="app" class="container mx-auto p-4">
         <h1 class="text-2xl font-bold text-center mb-4">Coffee Shop Staff Management</h1>
         
-        <!-- Навигация между разделами для переключения между таблицами -->
+        <!-- Навигация между разделами интерфейса -->
         <nav class="flex justify-around mb-4">
             <button @click="currentView = 'StaffSchedule'" class="btn-nav">Staff Schedule</button>
             <button @click="currentView = 'Staff'" class="btn-nav">Staff</button>
             <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
         </nav>
         
-        <!-- Раздел Staff Schedule: Форма добавления и таблица с данными -->
+        <!-- Раздел Staff Schedule -->
         <div v-if="currentView === 'StaffSchedule'">
             <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
-            <!-- Форма добавления и редактирования записи в таблицу StaffSchedule -->
             <form @submit.prevent="isEditing ? updateStaffSchedule() : createStaffSchedule()" class="mb-4">
                 <input v-model="newJobTitle" placeholder="Job Title" class="input"/>
                 <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
@@ -32,36 +30,37 @@
                 <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
 
-            <!-- Таблица данных Staff Schedule с опциями для редактирования и удаления -->
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Job Title</th>
-                        <th class="py-2 px-4 border-b">Rate</th>
-                        <th class="py-2 px-4 border-b">Bonus</th>
-                        <th class="py-2 px-4 border-b">Description</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="schedule in schedules" :key="schedule.id">
-                        <td class="py-2 px-4 border-b">{{ schedule.job_title }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.rate }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.bonus }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button @click="editStaffSchedule(schedule)" class="text-blue-500">Update</button>
-                            <button @click="deleteStaffSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Таблица данных Staff Schedule с ограничением по высоте -->
+            <div class="table-container">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b">Job Title</th>
+                            <th class="py-2 px-4 border-b">Rate</th>
+                            <th class="py-2 px-4 border-b">Bonus</th>
+                            <th class="py-2 px-4 border-b">Description</th>
+                            <th class="py-2 px-4 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="schedule in schedules" :key="schedule.id">
+                            <td class="py-2 px-4 border-b">{{ schedule.job_title }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.rate }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.bonus }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
+                            <td class="py-2 px-4 border-b">
+                                <button @click="editStaffSchedule(schedule)" class="text-blue-500">Update</button>
+                                <button @click="deleteStaffSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Раздел Staff: Форма добавления и таблица с данными -->
+        <!-- Раздел Staff -->
         <div v-if="currentView === 'Staff'">
             <h2 class="text-xl font-semibold mb-2">Staff</h2>
-            <!-- Форма для добавления и редактирования записи в таблицу Staff -->
             <form @submit.prevent="isEditing ? updateStaff() : createStaff()" class="mb-4">
                 <label for="job_title" class="block mb-2">Job Title</label>
                 <select v-model="newStaffScheduleId" class="input mb-4">
@@ -71,45 +70,46 @@
                     </option>
                 </select>
                 <input v-model="newFullName" placeholder="Full Name" class="input"/>
-                <input v-model="newDateOfHiring" placeholder="Date of Hiring" type="date" class="input"/>
+                <input v-model="newDateOfHiring" type="date" class="input"/>
                 <input v-model="newStatus" placeholder="Status" class="input"/>
                 <input v-model="newStaffDescription" placeholder="Description" class="input"/>
                 <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Staff' }}</button>
                 <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
 
-            <!-- Таблица данных Staff с колонкой Job Title, редактирование и удаление записей -->
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Full Name</th>
-                        <th class="py-2 px-4 border-b">Job Title</th>
-                        <th class="py-2 px-4 border-b">Date of Hiring</th>
-                        <th class="py-2 px-4 border-b">Status</th>
-                        <th class="py-2 px-4 border-b">Description</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="staff in staffList" :key="staff.id">
-                        <td class="py-2 px-4 border-b">{{ staff.full_name }}</td>
-                        <td class="py-2 px-4 border-b">{{ getJobTitle(staff.staff_schedule_id) }}</td>
-                        <td class="py-2 px-4 border-b">{{ staff.date_of_hiring }}</td>
-                        <td class="py-2 px-4 border-b">{{ staff.status }}</td>
-                        <td class="py-2 px-4 border-b">{{ staff.description }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button @click="editStaff(staff)" class="text-blue-500">Update</button>
-                            <button @click="deleteStaff(staff.id)" class="text-red-500 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Таблица данных Staff с ограничением по высоте -->
+            <div class="table-container">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b">Full Name</th>
+                            <th class="py-2 px-4 border-b">Job Title</th>
+                            <th class="py-2 px-4 border-b">Date of Hiring</th>
+                            <th class="py-2 px-4 border-b">Status</th>
+                            <th class="py-2 px-4 border-b">Description</th>
+                            <th class="py-2 px-4 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="staff in staffList" :key="staff.id">
+                            <td class="py-2 px-4 border-b">{{ staff.full_name }}</td>
+                            <td class="py-2 px-4 border-b">{{ getJobTitle(staff.staff_schedule_id) }}</td>
+                            <td class="py-2 px-4 border-b">{{ staff.date_of_hiring }}</td>
+                            <td class="py-2 px-4 border-b">{{ staff.status }}</td>
+                            <td class="py-2 px-4 border-b">{{ staff.description }}</td>
+                            <td class="py-2 px-4 border-b">
+                                <button @click="editStaff(staff)" class="text-blue-500">Update</button>
+                                <button @click="deleteStaff(staff.id)" class="text-red-500 ml-2">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Раздел Schedule: Форма добавления и таблица с данными -->
+        <!-- Раздел Schedule -->
         <div v-if="currentView === 'Schedule'">
             <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-            <!-- Форма для добавления и редактирования записи в таблицу Schedule -->
             <form @submit.prevent="isEditing ? updateSchedule() : createSchedule()" class="mb-4">
                 <label for="staff" class="block mb-2">Staff</label>
                 <select v-model="newStaffId" class="input mb-4">
@@ -119,14 +119,13 @@
                     </option>
                 </select>
                 <label for="coffee_shop" class="block mb-2">Coffee Shop</label>
-                <!-- Выпадающий список для выбора Coffee Shop -->
                 <select v-model="newCoffeeShopId" class="input mb-4">
                     <option disabled value="">Select Coffee Shop</option>
                     <option v-for="shop in coffeeShopOptions" :key="shop.id" :value="shop.id">
                         {{ shop.name }}
                     </option>
                 </select>
-                <input v-model="newDate" placeholder="Date" type="date" class="input"/>
+                <input v-model="newDate" type="date" class="input"/>
                 <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input"/>
                 <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input"/>
                 <input v-model="newRevenue" placeholder="Revenue" type="number" step="0.01" class="input"/>
@@ -135,34 +134,38 @@
                 <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
             </form>
 
-            <!-- Таблица данных Schedule с колонкой Full Name, редактирование и удаление записей -->
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Date</th>
-                        <th class="py-2 px-4 border-b">Full Name</th>
-                        <th class="py-2 px-4 border-b">Shift Start</th>
-                        <th class="py-2 px-4 border-b">Shift End</th>
-                        <th class="py-2 px-4 border-b">Revenue</th>
-                        <th class="py-2 px-4 border-b">Description</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="schedule in scheduleList" :key="schedule.id">
-                        <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
-                        <td class="py-2 px-4 border-b">{{ getFullName(schedule.staff_id) }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.shift_start }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.shift_end }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.revenue }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button @click="editSchedule(schedule)" class="text-blue-500">Update</button>
-                            <button @click="deleteSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Таблица данных Schedule с ограничением по высоте -->
+            <div class="table-container">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b">Date</th>
+                            <th class="py-2 px-4 border-b">Full Name</th>
+                            <th class="py-2 px-4 border-b">Coffee Shop</th>
+                            <th class="py-2 px-4 border-b">Shift Start</th>
+                            <th class="py-2 px-4 border-b">Shift End</th>
+                            <th class="py-2 px-4 border-b">Revenue</th>
+                            <th class="py-2 px-4 border-b">Description</th>
+                            <th class="py-2 px-4 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="schedule in scheduleList" :key="schedule.id">
+                            <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
+                            <td class="py-2 px-4 border-b">{{ getFullName(schedule.staff_id) }}</td>
+                            <td class="py-2 px-4 border-b">{{ getCoffeeShopName(schedule.coffee_shop_id) }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.shift_start }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.shift_end }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.revenue }}</td>
+                            <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
+                            <td class="py-2 px-4 border-b">
+                                <button @click="editSchedule(schedule)" class="text-blue-500">Update</button>
+                                <button @click="deleteSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -172,14 +175,9 @@
         createApp({
             data() {
                 return {
-                    currentView: 'StaffSchedule', // Хранит текущее представление (StaffSchedule, Staff, Schedule)
-                    isEditing: false, // Указывает, находится ли форма в режиме редактирования
-                    editId: null, // ID редактируемой записи
-                    // Массивы данных для отображения в таблицах
-                    schedules: [],
-                    staffList: [],
-                    scheduleList: [],
-                    // Поля для заполнения формы добавления и редактирования
+                    currentView: 'StaffSchedule',
+                    isEditing: false,
+                    editId: null,
                     newJobTitle: '',
                     newRate: '',
                     newBonus: '',
@@ -194,15 +192,17 @@
                     newDate: '',
                     newShiftStart: '',
                     newShiftEnd: '',
-                    newRevenue: '',
-                    // Опции для выпадающих списков
+                    newRevenue: 0,
+                    schedules: [],
+                    staffList: [],
+                    scheduleList: [],
                     staffScheduleOptions: [],
                     staffOptions: [],
                     coffeeShopOptions: []
                 };
             },
             methods: {
-                // Загрузка данных для каждой таблицы
+                // Функции для загрузки данных
                 fetchStaffSchedule() {
                     fetch('api.php?entity=staff_schedule')
                         .then(response => response.json())
@@ -218,8 +218,6 @@
                         .then(response => response.json())
                         .then(data => { this.scheduleList = data; });
                 },
-
-                // Загрузка опций для выпадающих списков
                 fetchStaffScheduleOptions() {
                     fetch('api.php?entity=staff_schedule')
                         .then(response => response.json())
@@ -233,10 +231,9 @@
                 fetchCoffeeShopOptions() {
                     fetch('api.php?entity=coffee_shop')
                         .then(response => response.json())
-                        .then(data => { this.coffeeShopOptions = data; }); // Исправление: метод fetchCoffeeShopOptions загружает данные для Coffee Shop
+                        .then(data => { this.coffeeShopOptions = data; }); 
                 },
-
-                // Получение Job Title и Full Name для отображения связанных данных
+                // Вспомогательные функции для получения названий
                 getJobTitle(staffScheduleId) {
                     const schedule = this.staffScheduleOptions.find(s => s.id === staffScheduleId);
                     return schedule ? schedule.job_title : '';
@@ -245,8 +242,11 @@
                     const staff = this.staffOptions.find(s => s.id === staffId);
                     return staff ? staff.full_name : '';
                 },
-
-                // Функции для добавления записей в каждую таблицу
+                getCoffeeShopName(coffeeShopId) {
+                    const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
+                    return shop ? shop.name : '';
+                },
+                // Функции для создания записей
                 createStaffSchedule() {
                     fetch('api.php?entity=staff_schedule', {
                         method: 'POST',
@@ -258,8 +258,8 @@
                             description: this.newDescription
                         })
                     }).then(() => {
-                        this.fetchStaffSchedule(); // Обновление таблицы после добавления записи
-                        this.fetchStaffScheduleOptions(); // Обновление опций для выпадающего списка
+                        this.fetchStaffSchedule(); 
+                        this.fetchStaffScheduleOptions(); 
                         this.resetForm();
                     });
                 },
@@ -298,8 +298,7 @@
                         this.resetForm();
                     });
                 },
-
-                // Функции для редактирования и обновления записей
+                // Функции для редактирования записей
                 editStaffSchedule(schedule) {
                     this.isEditing = true;
                     this.editId = schedule.id;
@@ -308,6 +307,27 @@
                     this.newBonus = schedule.bonus;
                     this.newDescription = schedule.description;
                 },
+                editStaff(staff) {
+                    this.isEditing = true;
+                    this.editId = staff.id;
+                    this.newStaffScheduleId = staff.staff_schedule_id;
+                    this.newFullName = staff.full_name;
+                    this.newDateOfHiring = staff.date_of_hiring;
+                    this.newStatus = staff.status;
+                    this.newStaffDescription = staff.description;
+                },
+                editSchedule(schedule) {
+                    this.isEditing = true;
+                    this.editId = schedule.id;
+                    this.newStaffId = schedule.staff_id;
+                    this.newCoffeeShopId = schedule.coffee_shop_id;
+                    this.newDate = schedule.date;
+                    this.newShiftStart = schedule.shift_start;
+                    this.newShiftEnd = schedule.shift_end;
+                    this.newRevenue = schedule.revenue;
+                    this.newDescription = schedule.description;
+                },
+                // Функции для обновления записей
                 updateStaffSchedule() {
                     fetch(`api.php?entity=staff_schedule&id=${this.editId}`, {
                         method: 'PUT',
@@ -323,16 +343,6 @@
                         this.fetchStaffScheduleOptions();
                         this.resetForm();
                     });
-                },
-
-                editStaff(staff) {
-                    this.isEditing = true;
-                    this.editId = staff.id;
-                    this.newStaffScheduleId = staff.staff_schedule_id;
-                    this.newFullName = staff.full_name;
-                    this.newDateOfHiring = staff.date_of_hiring;
-                    this.newStatus = staff.status;
-                    this.newStaffDescription = staff.description;
                 },
                 updateStaff() {
                     fetch(`api.php?entity=staff&id=${this.editId}`, {
@@ -350,18 +360,6 @@
                         this.fetchStaffOptions();
                         this.resetForm();
                     });
-                },
-
-                editSchedule(schedule) {
-                    this.isEditing = true;
-                    this.editId = schedule.id;
-                    this.newStaffId = schedule.staff_id;
-                    this.newCoffeeShopId = schedule.coffee_shop_id;
-                    this.newDate = schedule.date;
-                    this.newShiftStart = schedule.shift_start;
-                    this.newShiftEnd = schedule.shift_end;
-                    this.newRevenue = schedule.revenue;
-                    this.newDescription = schedule.description;
                 },
                 updateSchedule() {
                     fetch(`api.php?entity=schedule&id=${this.editId}`, {
@@ -381,7 +379,6 @@
                         this.resetForm();
                     });
                 },
-
                 // Функции для удаления записей
                 deleteStaffSchedule(id) {
                     fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
@@ -401,8 +398,7 @@
                     fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
                         .then(() => this.fetchSchedule());
                 },
-
-                // Сброс формы после добавления или обновления записи
+                // Сброс полей формы после добавления/обновления записи
                 resetForm() {
                     this.isEditing = false;
                     this.editId = null;
@@ -420,13 +416,12 @@
                     this.newDate = '';
                     this.newShiftStart = '';
                     this.newShiftEnd = '';
-                    this.newRevenue = '';
+                    this.newRevenue = 0;
                 },
                 cancelEdit() {
                     this.resetForm();
                 }
             },
-            // Инициализация данных при загрузке приложения
             mounted() {
                 this.fetchStaffSchedule();
                 this.fetchStaff();
@@ -439,12 +434,18 @@
     </script>
 
     <style>
-        /* Стили для кнопок, полей ввода и таблиц */
+        /* Стили для элементов формы и кнопок */
         .input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; margin-right: 0.5rem; }
         .btn-primary { padding: 0.5rem 1rem; background-color: #1D4ED8; color: white; border-radius: 8px; cursor: pointer; }
         .btn-secondary { padding: 0.5rem 1rem; background-color: #6B7280; color: white; border-radius: 8px; cursor: pointer; }
         .btn-nav { padding: 0.5rem 1rem; border: 2px solid #1F2937; border-radius: 8px; font-weight: bold; cursor: pointer; }
         th, td { text-align: left; }
+
+        /* Ограничение высоты таблиц и добавление скролла */
+        .table-container {
+            max-height: 400px; /* Примерно 10 строк */
+            overflow-y: auto; /* Вертикальный скролл, если больше 10 строк */
+        }
     </style>
 </body>
 </html>
