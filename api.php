@@ -1,451 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Shop Staff Management</title>
-    <!-- Подключение Vue.js и Tailwind CSS для создания динамического интерфейса -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.33/dist/vue.global.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body>
-    <div id="app" class="container mx-auto p-4">
-        <h1 class="text-2xl font-bold text-center mb-4">Coffee Shop Staff Management</h1>
-        
-        <!-- Навигация между разделами для переключения между таблицами -->
-        <nav class="flex justify-around mb-4">
-            <button @click="currentView = 'StaffSchedule'" class="btn-nav">Staff Schedule</button>
-            <button @click="currentView = 'Staff'" class="btn-nav">Staff</button>
-            <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
-        </nav>
-        
-        <!-- Раздел Staff Schedule: Форма добавления и таблица с данными -->
-        <div v-if="currentView === 'StaffSchedule'">
-            <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
-            <form @submit.prevent="isEditing ? updateStaffSchedule() : createStaffSchedule()" class="mb-4">
-                <input v-model="newJobTitle" placeholder="Job Title" class="input"/>
-                <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
-                <input v-model="newBonus" placeholder="Bonus" type="number" step="0.01" class="input"/>
-                <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Schedule' }}</button>
-                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
-            </form>
+<?php
+require 'database.php';
 
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Job Title</th>
-                        <th class="py-2 px-4 border-b">Rate</th>
-                        <th class="py-2 px-4 border-b">Bonus</th>
-                        <th class="py-2 px-4 border-b">Description</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="schedule in schedules" :key="schedule.id">
-                        <td class="py-2 px-4 border-b">{{ schedule.job_title }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.rate }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.bonus }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button @click="editStaffSchedule(schedule)" class="text-blue-500">Update</button>
-                            <button @click="deleteStaffSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+header("Content-Type: application/json");
 
-        <!-- Раздел Staff: Форма добавления и таблица с данными -->
-        <div v-if="currentView === 'Staff'">
-            <h2 class="text-xl font-semibold mb-2">Staff</h2>
-            <form @submit.prevent="isEditing ? updateStaff() : createStaff()" class="mb-4">
-                <label for="job_title" class="block mb-2">Job Title</label>
-                <select v-model="newStaffScheduleId" class="input mb-4">
-                    <option disabled value="">Select Job Title</option>
-                    <option v-for="schedule in staffScheduleOptions" :key="schedule.id" :value="schedule.id">
-                        {{ schedule.job_title }}
-                    </option>
-                </select>
-                <input v-model="newFullName" placeholder="Full Name" class="input"/>
-                <input v-model="newDateOfHiring" type="date" class="input" :value="todayDate"/>
-                <input v-model="newStatus" placeholder="Status" class="input"/>
-                <input v-model="newStaffDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Staff' }}</button>
-                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
-            </form>
+// Получаем метод запроса и параметры
+$requestMethod = $_SERVER['REQUEST_METHOD'];
+$entity = isset($_GET['entity']) ? $_GET['entity'] : null;
+$id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Full Name</th>
-                        <th class="py-2 px-4 border-b">Job Title</th>
-                        <th class="py-2 px-4 border-b">Date of Hiring</th>
-                        <th class="py-2 px-4 border-b">Status</th>
-                        <th class="py-2 px-4 border-b">Description</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="staff in staffList" :key="staff.id">
-                        <td class="py-2 px-4 border-b">{{ staff.full_name }}</td>
-                        <td class="py-2 px-4 border-b">{{ getJobTitle(staff.staff_schedule_id) }}</td>
-                        <td class="py-2 px-4 border-b">{{ staff.date_of_hiring }}</td>
-                        <td class="py-2 px-4 border-b">{{ staff.status }}</td>
-                        <td class="py-2 px-4 border-b">{{ staff.description }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button @click="editStaff(staff)" class="text-blue-500">Update</button>
-                            <button @click="deleteStaff(staff.id)" class="text-red-500 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+// Подключаемся к базе данных
+$pdo = connectDatabase();
 
-        <!-- Раздел Schedule: Форма добавления и таблица с данными -->
-        <div v-if="currentView === 'Schedule'">
-            <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-            <form @submit.prevent="isEditing ? updateSchedule() : createSchedule()" class="mb-4">
-                <label for="staff" class="block mb-2">Staff</label>
-                <select v-model="newStaffId" class="input mb-4">
-                    <option disabled value="">Select Staff</option>
-                    <option v-for="staff in staffOptions" :key="staff.id" :value="staff.id">
-                        {{ staff.full_name }}
-                    </option>
-                </select>
-                <label for="coffee_shop" class="block mb-2">Coffee Shop</label>
-                <select v-model="newCoffeeShopId" class="input mb-4">
-                    <option disabled value="">Select Coffee Shop</option>
-                    <option v-for="shop in coffeeShopOptions" :key="shop.id" :value="shop.id">
-                        {{ shop.name }}
-                    </option>
-                </select>
-                <input v-model="newDate" type="date" class="input" :value="todayDate"/>
-                <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input"/>
-                <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input"/>
-                <input v-model="newRevenue" placeholder="Revenue" type="number" step="0.01" class="input"/>
-                <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Schedule' }}</button>
-                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
-            </form>
+// Проверяем сущность и выполняем нужные CRUD-операции
+switch ($entity) {
+    case 'staff_schedule':
+        handleStaffSchedule($requestMethod, $pdo, $id);
+        break;
+    case 'staff':
+        handleStaff($requestMethod, $pdo, $id);
+        break;
+    case 'schedule':
+        handleSchedule($requestMethod, $pdo, $id);
+        break;
+    case 'coffee_shop':  // Новый блок для работы с CoffeeShop
+        handleCoffeeShop($requestMethod, $pdo, $id);
+        break;
+    default:
+        echo json_encode(["error" => "Invalid entity specified"]);
+}
 
-            <!-- Таблица данных Schedule с колонками Full Name и Coffee Shop -->
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">Date</th>
-                        <th class="py-2 px-4 border-b">Full Name</th>
-                        <th class="py-2 px-4 border-b">Coffee Shop</th>
-                        <th class="py-2 px-4 border-b">Shift Start</th>
-                        <th class="py-2 px-4 border-b">Shift End</th>
-                        <th class="py-2 px-4 border-b">Revenue</th>
-                        <th class="py-2 px-4 border-b">Description</th>
-                        <th class="py-2 px-4 border-b">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="schedule in scheduleList" :key="schedule.id">
-                        <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
-                        <td class="py-2 px-4 border-b">{{ getFullName(schedule.staff_id) }}</td>
-                        <td class="py-2 px-4 border-b">{{ getCoffeeShopName(schedule.coffee_shop_id) }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.shift_start }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.shift_end }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.revenue }}</td>
-                        <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
-                        <td class="py-2 px-4 border-b">
-                            <button @click="editSchedule(schedule)" class="text-blue-500">Update</button>
-                            <button @click="deleteSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+// CRUD для StaffSchedule
+function handleStaffSchedule($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            $stmt = $id ? $pdo->prepare("SELECT * FROM StaffSchedule WHERE id = ?") : $pdo->query("SELECT * FROM StaffSchedule");
+            $stmt->execute($id ? [$id] : []);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO StaffSchedule (job_title, rate, bonus, description) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$data['job_title'], $data['rate'], $data['bonus'], $data['description']]);
+            echo json_encode(["success" => true, "id" => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE StaffSchedule SET job_title = ?, rate = ?, bonus = ?, description = ? WHERE id = ?");
+            $stmt->execute([$data['job_title'], $data['rate'], $data['bonus'], $data['description'], $id]);
+            echo json_encode(["success" => true]);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM StaffSchedule WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(["success" => true]);
+            break;
+        default:
+            echo json_encode(["error" => "Method not allowed"]);
+    }
+}
 
-    <script>
-        const { createApp } = Vue;
+// CRUD для Staff
+function handleStaff($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            $stmt = $id ? $pdo->prepare("SELECT * FROM Staff WHERE id = ?") : $pdo->query("SELECT * FROM Staff");
+            $stmt->execute($id ? [$id] : []);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO Staff (staff_schedule_id, full_name, date_of_hiring, status, description) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$data['staff_schedule_id'], $data['full_name'], $data['date_of_hiring'], $data['status'], $data['description']]);
+            echo json_encode(["success" => true, "id" => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE Staff SET staff_schedule_id = ?, full_name = ?, date_of_hiring = ?, status = ?, description = ? WHERE id = ?");
+            $stmt->execute([$data['staff_schedule_id'], $data['full_name'], $data['date_of_hiring'], $data['status'], $data['description'], $id]);
+            echo json_encode(["success" => true]);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM Staff WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(["success" => true]);
+            break;
+        default:
+            echo json_encode(["error" => "Method not allowed"]);
+    }
+}
 
-        createApp({
-            data() {
-                return {
-                    currentView: 'StaffSchedule', // Хранит текущее представление (StaffSchedule, Staff, Schedule)
-                    isEditing: false, // Указывает, находится ли форма в режиме редактирования
-                    editId: null, // ID редактируемой записи
-                    // Массивы данных для отображения в таблицах
-                    schedules: [],
-                    staffList: [],
-                    scheduleList: [],
-                    // Поля для заполнения формы добавления и редактирования
-                    newJobTitle: '',
-                    newRate: '',
-                    newBonus: '',
-                    newDescription: '',
-                    newStaffScheduleId: '',
-                    newFullName: '',
-                    newDateOfHiring: '',
-                    newStatus: '',
-                    newStaffDescription: '',
-                    newStaffId: '',
-                    newCoffeeShopId: '',
-                    newDate: '',
-                    newShiftStart: '',
-                    newShiftEnd: '',
-                    newRevenue: '',
-                    // Опции для выпадающих списков
-                    staffScheduleOptions: [],
-                    staffOptions: [],
-                    coffeeShopOptions: [],
-                    todayDate: new Date().toISOString().split('T')[0] // Текущая дата в формате YYYY-MM-DD
-                };
-            },
-            methods: {
-                // Загрузка данных для каждой таблицы
-                fetchStaffSchedule() {
-                    fetch('api.php?entity=staff_schedule')
-                        .then(response => response.json())
-                        .then(data => { this.schedules = data; });
-                },
-                fetchStaff() {
-                    fetch('api.php?entity=staff')
-                        .then(response => response.json())
-                        .then(data => { this.staffList = data; });
-                },
-                fetchSchedule() {
-                    fetch('api.php?entity=schedule')
-                        .then(response => response.json())
-                        .then(data => { this.scheduleList = data; });
-                },
+// CRUD для Schedule
+function handleSchedule($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            $stmt = $id ? $pdo->prepare("SELECT * FROM Schedule WHERE id = ?") : $pdo->query("SELECT * FROM Schedule");
+            $stmt->execute($id ? [$id] : []);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO Schedule (staff_id, coffee_shop_id, date, shift_start, shift_end, revenue, description) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['staff_id'], $data['coffee_shop_id'], $data['date'], $data['shift_start'], $data['shift_end'], $data['revenue'], $data['description']]);
+            echo json_encode(["success" => true, "id" => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE Schedule SET staff_id = ?, coffee_shop_id = ?, date = ?, shift_start = ?, shift_end = ?, revenue = ?, description = ? WHERE id = ?");
+            $stmt->execute([$data['staff_id'], $data['coffee_shop_id'], $data['date'], $data['shift_start'], $data['shift_end'], $data['revenue'], $data['description'], $id]);
+            echo json_encode(["success" => true]);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM Schedule WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(["success" => true]);
+            break;
+        default:
+            echo json_encode(["error" => "Method not allowed"]);
+    }
+}
 
-                // Загрузка опций для выпадающих списков
-                fetchStaffScheduleOptions() {
-                    fetch('api.php?entity=staff_schedule')
-                        .then(response => response.json())
-                        .then(data => { this.staffScheduleOptions = data; });
-                },
-                fetchStaffOptions() {
-                    fetch('api.php?entity=staff')
-                        .then(response => response.json())
-                        .then(data => { this.staffOptions = data; });
-                },
-                fetchCoffeeShopOptions() {
-                    fetch('api.php?entity=coffee_shop')
-                        .then(response => response.json())
-                        .then(data => { this.coffeeShopOptions = data; }); 
-                },
-
-                // Получение Job Title, Full Name и Coffee Shop для отображения связанных данных
-                getJobTitle(staffScheduleId) {
-                    const schedule = this.staffScheduleOptions.find(s => s.id === staffScheduleId);
-                    return schedule ? schedule.job_title : '';
-                },
-                getFullName(staffId) {
-                    const staff = this.staffOptions.find(s => s.id === staffId);
-                    return staff ? staff.full_name : '';
-                },
-                getCoffeeShopName(coffeeShopId) {
-                    const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
-                    return shop ? shop.name : '';
-                },
-
-                // Функции для добавления записей в каждую таблицу
-                createStaffSchedule() {
-                    fetch('api.php?entity=staff_schedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            job_title: this.newJobTitle,
-                            rate: this.newRate,
-                            bonus: this.newBonus,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaffSchedule(); 
-                        this.fetchStaffScheduleOptions(); 
-                        this.resetForm();
-                    });
-                },
-                createStaff() {
-                    fetch('api.php?entity=staff', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_schedule_id: this.newStaffScheduleId,
-                            full_name: this.newFullName,
-                            date_of_hiring: this.newDateOfHiring,
-                            status: this.newStatus,
-                            description: this.newStaffDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaff();
-                        this.fetchStaffOptions();
-                        this.resetForm();
-                    });
-                },
-                createSchedule() {
-                    fetch('api.php?entity=schedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_id: this.newStaffId,
-                            coffee_shop_id: this.newCoffeeShopId,
-                            date: this.newDate,
-                            shift_start: this.newShiftStart,
-                            shift_end: this.newShiftEnd,
-                            revenue: this.newRevenue,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchSchedule();
-                        this.resetForm();
-                    });
-                },
-
-                // Функции для редактирования и обновления записей
-                editStaffSchedule(schedule) {
-                    this.isEditing = true;
-                    this.editId = schedule.id;
-                    this.newJobTitle = schedule.job_title;
-                    this.newRate = schedule.rate;
-                    this.newBonus = schedule.bonus;
-                    this.newDescription = schedule.description;
-                },
-                updateStaffSchedule() {
-                    fetch(`api.php?entity=staff_schedule&id=${this.editId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            job_title: this.newJobTitle,
-                            rate: this.newRate,
-                            bonus: this.newBonus,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaffSchedule();
-                        this.fetchStaffScheduleOptions();
-                        this.resetForm();
-                    });
-                },
-
-                editStaff(staff) {
-                    this.isEditing = true;
-                    this.editId = staff.id;
-                    this.newStaffScheduleId = staff.staff_schedule_id;
-                    this.newFullName = staff.full_name;
-                    this.newDateOfHiring = staff.date_of_hiring;
-                    this.newStatus = staff.status;
-                    this.newStaffDescription = staff.description;
-                },
-                updateStaff() {
-                    fetch(`api.php?entity=staff&id=${this.editId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_schedule_id: this.newStaffScheduleId,
-                            full_name: this.newFullName,
-                            date_of_hiring: this.newDateOfHiring,
-                            status: this.newStatus,
-                            description: this.newStaffDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaff();
-                        this.fetchStaffOptions();
-                        this.resetForm();
-                    });
-                },
-
-                editSchedule(schedule) {
-                    this.isEditing = true;
-                    this.editId = schedule.id;
-                    this.newStaffId = schedule.staff_id;
-                    this.newCoffeeShopId = schedule.coffee_shop_id;
-                    this.newDate = schedule.date;
-                    this.newShiftStart = schedule.shift_start;
-                    this.newShiftEnd = schedule.shift_end;
-                    this.newRevenue = schedule.revenue;
-                    this.newDescription = schedule.description;
-                },
-                updateSchedule() {
-                    fetch(`api.php?entity=schedule&id=${this.editId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_id: this.newStaffId,
-                            coffee_shop_id: this.newCoffeeShopId,
-                            date: this.newDate,
-                            shift_start: this.newShiftStart,
-                            shift_end: this.newShiftEnd,
-                            revenue: this.newRevenue,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchSchedule();
-                        this.resetForm();
-                    });
-                },
-
-                // Функции для удаления записей
-                deleteStaffSchedule(id) {
-                    fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => {
-                            this.fetchStaffSchedule();
-                            this.fetchStaffScheduleOptions();
-                        });
-                },
-                deleteStaff(id) {
-                    fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
-                        .then(() => {
-                            this.fetchStaff();
-                            this.fetchStaffOptions();
-                        });
-                },
-                deleteSchedule(id) {
-                    fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchSchedule());
-                },
-
-                // Сброс формы после добавления или обновления записи
-                resetForm() {
-                    this.isEditing = false;
-                    this.editId = null;
-                    this.newJobTitle = '';
-                    this.newRate = '';
-                    this.newBonus = '';
-                    this.newDescription = '';
-                    this.newStaffScheduleId = '';
-                    this.newFullName = '';
-                    this.newDateOfHiring = '';
-                    this.newStatus = '';
-                    this.newStaffDescription = '';
-                    this.newStaffId = '';
-                    this.newCoffeeShopId = '';
-                    this.newDate = this.todayDate; // Устанавливаем дату по умолчанию как текущую
-                    this.newShiftStart = '';
-                    this.newShiftEnd = '';
-                    this.newRevenue = '';
-                },
-                cancelEdit() {
-                    this.resetForm();
-                }
-            },
-            // Инициализация данных при загрузке приложения
-            mounted() {
-                this.fetchStaffSchedule();
-                this.fetchStaff();
-                this.fetchSchedule();
-                this.fetchStaffScheduleOptions();
-                this.fetchStaffOptions();
-                this.fetchCoffeeShopOptions();
-            }
-        }).mount('#app');
-    </script>
-
-    <style>
-        /* Стили для кнопок, полей ввода и таблиц */
-        .input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; margin-right: 0.5rem; }
-        .btn-primary { padding: 0.5rem 1rem; background-color: #1D4ED8; color: white; border-radius: 8px; cursor: pointer; }
-        .btn-secondary { padding: 0.5rem 1rem; background-color: #6B7280; color: white; border-radius: 8px; cursor: pointer; }
-        .btn-nav { padding: 0.5rem 1rem; border: 2px solid #1F2937; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        th, td { text-align: left; }
-    </style>
-</body>
-</html>
+// CRUD для CoffeeShop
+function handleCoffeeShop($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            $stmt = $id ? $pdo->prepare("SELECT * FROM CoffeeShop WHERE id = ?") : $pdo->query("SELECT * FROM CoffeeShop");
+            $stmt->execute($id ? [$id] : []);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO CoffeeShop (name, address, description) VALUES (?, ?, ?)");
+            $stmt->execute([$data['name'], $data['address'], $data['description']]);
+            echo json_encode(["success" => true, "id" => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE CoffeeShop SET name = ?, address = ?, description = ? WHERE id = ?");
+            $stmt->execute([$data['name'], $data['address'], $data['description'], $id]);
+            echo json_encode(["success" => true]);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM CoffeeShop WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(["success" => true]);
+            break;
+        default:
+            echo json_encode(["error" => "Method not allowed"]);
+    }
+}
+?>
