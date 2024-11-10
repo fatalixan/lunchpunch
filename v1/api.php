@@ -1,5 +1,4 @@
 <?php
-
 require 'database.php';
 
 header("Content-Type: application/json");
@@ -12,10 +11,8 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 // Подключаемся к базе данных
 $pdo = connectDatabase();
 
-
-switch ($entity) {
-    
 // Проверяем сущность и выполняем нужные CRUD-операции
+switch ($entity) {
     case 'staff_schedule':
         handleStaffSchedule($requestMethod, $pdo, $id);
         break;

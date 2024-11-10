@@ -3,463 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Shop Staff Management</title>
+    <title>Login - Coffee Shop Management</title>
+    <!-- Подключаем Vue.js через CDN -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3.2.33/dist/vue.global.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Встроенные стили -->
+    <style>
+        /* Основные стили для страницы */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f4f6;
+            margin: 0;
+        }
+
+        /* Контейнер для формы авторизации */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* Поля ввода */
+        .input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        /* Кнопка отправки формы */
+        .btn-primary {
+            padding: 0.5rem 1rem;
+            background-color: #1D4ED8;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        /* Стиль для зоны уведомлений */
+        .notification {
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        /* Цвет уведомления об ошибке */
+        .notification.error {
+            background-color: #f56565;
+            color: white;
+        }
+
+        /* Цвет уведомления об успешном действии */
+        .notification.success {
+            background-color: #48bb78;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div id="app" class="container mx-auto p-4">
-        <h1 class="text-2xl font-bold text-center mb-4">Coffee Shop Staff Management</h1>
-        
-        <!-- Навигация между разделами интерфейса -->
-        <nav class="flex justify-around mb-4">
-            <button @click="currentView = 'StaffSchedule'" class="btn-nav">Staff Schedule</button>
-            <button @click="currentView = 'Staff'" class="btn-nav">Staff</button>
-            <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
-        </nav>
-        
-        <!-- Раздел Staff Schedule -->
-        <div v-if="currentView === 'StaffSchedule'">
-            <h2 class="text-xl font-semibold mb-2">Staff Schedule</h2>
-            <form @submit.prevent="isEditing ? updateStaffSchedule() : createStaffSchedule()" class="mb-4">
-                <input v-model="newJobTitle" placeholder="Job Title" class="input" required/>
-                <input v-model="newRate" placeholder="Rate" type="number" step="0.01" class="input"/>
-                <input v-model="newBonus" placeholder="Bonus" type="number" step="0.01" class="input"/>
-                <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Schedule' }}</button>
-                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
-            </form>
-
-            <!-- Таблица данных Staff Schedule -->
-            <div class="table-container">
-                <table class="min-w-full bg-white">
-                    <thead class="sticky-header">
-                        <tr>
-                            <th class="py-2 px-4 border-b">Job Title</th>
-                            <th class="py-2 px-4 border-b">Rate</th>
-                            <th class="py-2 px-4 border-b">Bonus</th>
-                            <th class="py-2 px-4 border-b">Description</th>
-                            <th class="py-2 px-4 border-b">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="schedule in schedules" :key="schedule.id">
-                            <td class="py-2 px-4 border-b">{{ schedule.job_title }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.rate }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.bonus }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
-                            <td class="py-2 px-4 border-b">
-                                <button @click="editStaffSchedule(schedule)" class="text-blue-500">Update</button>
-                                <button @click="deleteStaffSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    <!-- Главный контейнер для Vue-приложения -->
+    <div id="app" class="login-container">
+        <!-- Зона уведомлений, которая показывается при ошибке или успехе -->
+        <div v-if="notification" :class="['notification', notificationType]">
+            {{ notification }}
         </div>
 
-        <!-- Раздел Staff -->
-        <div v-if="currentView === 'Staff'">
-            <h2 class="text-xl font-semibold mb-2">Staff</h2>
-            <form @submit.prevent="isEditing ? updateStaff() : createStaff()" class="mb-4">
-                <label for="job_title" class="block mb-2">Job Title</label>
-                <select v-model="newStaffScheduleId" class="input mb-4" required>
-                    <option disabled value="">Select Job Title</option>
-                    <option v-for="schedule in staffScheduleOptions" :key="schedule.id" :value="schedule.id">
-                        {{ schedule.job_title }}
-                    </option>
-                </select>
-                <input v-model="newFullName" placeholder="Full Name" class="input" required/>
-                <input v-model="newDateOfHiring" type="date" class="input"/>
-                <input v-model="newStatus" placeholder="Status" class="input"/>
-                <input v-model="newStaffDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Staff' }}</button>
-                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
-            </form>
+        <!-- Заголовок формы авторизации -->
+        <h2 class="text-xl font-bold mb-4">Login</h2>
 
-            <!-- Таблица данных Staff -->
-            <div class="table-container">
-                <table class="min-w-full bg-white">
-                    <thead class="sticky-header">
-                        <tr>
-                            <th class="py-2 px-4 border-b">Full Name</th>
-                            <th class="py-2 px-4 border-b">Job Title</th>
-                            <th class="py-2 px-4 border-b">Date of Hiring</th>
-                            <th class="py-2 px-4 border-b">Status</th>
-                            <th class="py-2 px-4 border-b">Description</th>
-                            <th class="py-2 px-4 border-b">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="staff in staffList" :key="staff.id">
-                            <td class="py-2 px-4 border-b">{{ staff.full_name }}</td>
-                            <td class="py-2 px-4 border-b">{{ getJobTitle(staff.staff_schedule_id) }}</td>
-                            <td class="py-2 px-4 border-b">{{ staff.date_of_hiring }}</td>
-                            <td class="py-2 px-4 border-b">{{ staff.status }}</td>
-                            <td class="py-2 px-4 border-b">{{ staff.description }}</td>
-                            <td class="py-2 px-4 border-b">
-                                <button @click="editStaff(staff)" class="text-blue-500">Update</button>
-                                <button @click="deleteStaff(staff.id)" class="text-red-500 ml-2">Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <!-- Форма авторизации -->
+        <form @submit.prevent="login">
+            <!-- Поле ввода имени пользователя -->
+            <input v-model="username" placeholder="Username" class="input" required />
 
-        <!-- Раздел Schedule -->
-        <div v-if="currentView === 'Schedule'">
-            <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-            <form @submit.prevent="isEditing ? updateSchedule() : createSchedule()" class="mb-4">
-                <label for="staff" class="block mb-2">Staff</label>
-                <select v-model="newStaffId" class="input mb-4" required>
-                    <option disabled value="">Select Staff</option>
-                    <option v-for="staff in staffOptions" :key="staff.id" :value="staff.id">
-                        {{ staff.full_name }}
-                    </option>
-                </select>
-                <label for="coffee_shop" class="block mb-2">Coffee Shop</label>
-                <select v-model="newCoffeeShopId" class="input mb-4" required>
-                    <option disabled value="">Select Coffee Shop</option>
-                    <option v-for="shop in coffeeShopOptions" :key="shop.id" :value="shop.id">
-                        {{ shop.name }}
-                    </option>
-                </select>
-                <input v-model="newDate" type="date" class="input" required/>
-                <input v-model="newShiftStart" placeholder="Shift Start" type="time" class="input" required/>
-                <input v-model="newShiftEnd" placeholder="Shift End" type="time" class="input" required/>
-                <input v-model="newRevenue" placeholder="Revenue" type="number" step="0.01" class="input"/>
-                <input v-model="newDescription" placeholder="Description" class="input"/>
-                <button type="submit" class="btn-primary">{{ isEditing ? 'Save Changes' : 'Add Schedule' }}</button>
-                <button v-if="isEditing" @click="cancelEdit" class="btn-secondary">Cancel</button>
-            </form>
+            <!-- Поле ввода пароля -->
+            <input v-model="password" type="password" placeholder="Password" class="input" required />
 
-            <!-- Таблица данных Schedule -->
-            <div class="table-container">
-                <table class="min-w-full bg-white">
-                    <thead class="sticky-header">
-                        <tr>
-                            <th class="py-2 px-4 border-b">Date</th>
-                            <th class="py-2 px-4 border-b">Full Name</th>
-                            <th class="py-2 px-4 border-b">Coffee Shop</th>
-                            <th class="py-2 px-4 border-b">Shift Start</th>
-                            <th class="py-2 px-4 border-b">Shift End</th>
-                            <th class="py-2 px-4 border-b">Revenue</th>
-                            <th class="py-2 px-4 border-b">Description</th>
-                            <th class="py-2 px-4 border-b">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="schedule in scheduleList" :key="schedule.id">
-                            <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
-                            <td class="py-2 px-4 border-b">{{ getFullName(schedule.staff_id) }}</td>
-                            <!-- Ячейка Coffee Shop с динамическим классом цвета -->
-                             <td :class="getCoffeeShopClass(schedule.coffee_shop_id)" class="py-2 px-4 border-b">
-                             {{ getCoffeeShopName(schedule.coffee_shop_id) }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.shift_start }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.shift_end }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.revenue }}</td>
-                            <td class="py-2 px-4 border-b">{{ schedule.description }}</td>
-                            <td class="py-2 px-4 border-b">
-                                <button @click="editSchedule(schedule)" class="text-blue-500">Update</button>
-                                <button @click="deleteSchedule(schedule.id)" class="text-red-500 ml-2">Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <!-- Кнопка отправки формы -->
+            <button type="submit" class="btn-primary">Login</button>
+        </form>
     </div>
 
     <script>
-        const { createApp } = Vue;
-
-        createApp({
+        // Создаем Vue-приложение
+        Vue.createApp({
+            // Определяем данные приложения
             data() {
                 return {
-                    currentView: 'StaffSchedule',
-                    isEditing: false,
-                    editId: null,
-                    newJobTitle: '',
-                    newRate: '',
-                    newBonus: '',
-                    newDescription: '',
-                    newStaffScheduleId: '',
-                    newFullName: '',
-                    newDateOfHiring: '',
-                    newStatus: '',
-                    newStaffDescription: '',
-                    newStaffId: '',
-                    newCoffeeShopId: '',
-                    newDate: '',
-                    newShiftStart: '',
-                    newShiftEnd: '',
-                    newRevenue: 0,
-                    schedules: [],
-                    staffList: [],
-                    scheduleList: [],
-                    staffScheduleOptions: [],
-                    staffOptions: [],
-                    coffeeShopOptions: []
+                    username: '',           // Имя пользователя
+                    password: '',           // Пароль
+                    notification: '',       // Сообщение уведомления
+                    notificationType: ''    // Тип уведомления (успех или ошибка)
                 };
             },
+            // Определяем методы приложения
             methods: {
-                fetchStaffSchedule() {
-                    fetch('api.php?entity=staff_schedule')
-                        .then(response => response.json())
-                        .then(data => { this.schedules = data; });
-                },
-                fetchStaff() {
-                    fetch('api.php?entity=staff')
-                        .then(response => response.json())
-                        .then(data => { this.staffList = data; });
-                },
-                fetchSchedule() {
-                    fetch('api.php?entity=schedule')
-                        .then(response => response.json())
-                        .then(data => { this.scheduleList = data; });
-                },
-                fetchStaffScheduleOptions() {
-                    fetch('api.php?entity=staff_schedule')
-                        .then(response => response.json())
-                        .then(data => { this.staffScheduleOptions = data; });
-                },
-                fetchStaffOptions() {
-                    fetch('api.php?entity=staff')
-                        .then(response => response.json())
-                        .then(data => { this.staffOptions = data; });
-                },
-                fetchCoffeeShopOptions() {
-                    fetch('api.php?entity=coffee_shop')
-                        .then(response => response.json())
-                        .then(data => { this.coffeeShopOptions = data; }); 
-                },
-                getJobTitle(staffScheduleId) {
-                    const schedule = this.staffScheduleOptions.find(s => s.id === staffScheduleId);
-                    return schedule ? schedule.job_title : '';
-                },
-                getFullName(staffId) {
-                    const staff = this.staffOptions.find(s => s.id === staffId);
-                    return staff ? staff.full_name : '';
-                },
-                getCoffeeShopName(coffeeShopId) {
-                    const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
-                    return shop ? shop.name : '';
-                },
-                createStaffSchedule() {
-                    fetch('api.php?entity=staff_schedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            job_title: this.newJobTitle,
-                            rate: this.newRate,
-                            bonus: this.newBonus,
-                            description: this.newDescription
+                // Метод для отправки данных формы на сервер
+                login() {
+                    // Отправляем запрос на сервер для проверки авторизации
+                    fetch('user.php', {
+                        method: 'POST', // Используем метод POST для передачи данных
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({
+                            action: 'login',          // Действие для API
+                            username: this.username,  // Имя пользователя
+                            password: this.password   // Пароль
                         })
-                    }).then(() => {
-                        this.fetchStaffSchedule(); 
-                        this.fetchStaffScheduleOptions(); 
-                        this.resetForm();
+                    })
+                    .then(response => response.json()) // Преобразуем ответ в формат JSON
+                    .then(data => {
+                        // Проверяем ответ от сервера
+                        if (data.status === 'success') {
+                            // При успешной авторизации перенаправляем на страницу dashboard
+                            window.location.href = 'dashboard.html';
+                        } else {
+                            // Если ошибка, показываем сообщение об ошибке
+                            this.showNotification(data.message, 'error');
+                        }
+                    })
+                    .catch(() => {
+                        // Если произошла сетевая ошибка, показываем сообщение
+                        this.showNotification('Network error. Please try again.', 'error');
                     });
                 },
-                createStaff() {
-                    fetch('api.php?entity=staff', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_schedule_id: this.newStaffScheduleId,
-                            full_name: this.newFullName,
-                            date_of_hiring: this.newDateOfHiring,
-                            status: this.newStatus,
-                            description: this.newStaffDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaff();
-                        this.fetchStaffOptions();
-                        this.resetForm();
-                    });
-                },
-                createSchedule() {
-                    fetch('api.php?entity=schedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_id: this.newStaffId,
-                            coffee_shop_id: this.newCoffeeShopId,
-                            date: this.newDate,
-                            shift_start: this.newShiftStart,
-                            shift_end: this.newShiftEnd,
-                            revenue: this.newRevenue,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchSchedule();
-                        this.resetForm();
-                    });
-                },
-                editStaffSchedule(schedule) {
-                    this.isEditing = true;
-                    this.editId = schedule.id;
-                    this.newJobTitle = schedule.job_title;
-                    this.newRate = schedule.rate;
-                    this.newBonus = schedule.bonus;
-                    this.newDescription = schedule.description;
-                },
-                editStaff(staff) {
-                    this.isEditing = true;
-                    this.editId = staff.id;
-                    this.newStaffScheduleId = staff.staff_schedule_id;
-                    this.newFullName = staff.full_name;
-                    this.newDateOfHiring = staff.date_of_hiring;
-                    this.newStatus = staff.status;
-                    this.newStaffDescription = staff.description;
-                },
-                editSchedule(schedule) {
-                    this.isEditing = true;
-                    this.editId = schedule.id;
-                    this.newStaffId = schedule.staff_id;
-                    this.newCoffeeShopId = schedule.coffee_shop_id;
-                    this.newDate = schedule.date;
-                    this.newShiftStart = schedule.shift_start;
-                    this.newShiftEnd = schedule.shift_end;
-                    this.newRevenue = schedule.revenue;
-                    this.newDescription = schedule.description;
-                },
-                updateStaffSchedule() {
-                    fetch(`api.php?entity=staff_schedule&id=${this.editId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            job_title: this.newJobTitle,
-                            rate: this.newRate,
-                            bonus: this.newBonus,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaffSchedule();
-                        this.fetchStaffScheduleOptions();
-                        this.resetForm();
-                    });
-                },
-                updateStaff() {
-                    fetch(`api.php?entity=staff&id=${this.editId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_schedule_id: this.newStaffScheduleId,
-                            full_name: this.newFullName,
-                            date_of_hiring: this.newDateOfHiring,
-                            status: this.newStatus,
-                            description: this.newStaffDescription
-                        })
-                    }).then(() => {
-                        this.fetchStaff();
-                        this.fetchStaffOptions();
-                        this.resetForm();
-                    });
-                },
-                updateSchedule() {
-                    fetch(`api.php?entity=schedule&id=${this.editId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            staff_id: this.newStaffId,
-                            coffee_shop_id: this.newCoffeeShopId,
-                            date: this.newDate,
-                            shift_start: this.newShiftStart,
-                            shift_end: this.newShiftEnd,
-                            revenue: this.newRevenue,
-                            description: this.newDescription
-                        })
-                    }).then(() => {
-                        this.fetchSchedule();
-                        this.resetForm();
-                    });
-                },
-                deleteStaffSchedule(id) {
-                    fetch(`api.php?entity=staff_schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => {
-                            this.fetchStaffSchedule();
-                            this.fetchStaffScheduleOptions();
-                        });
-                },
-                deleteStaff(id) {
-                    fetch(`api.php?entity=staff&id=${id}`, { method: 'DELETE' })
-                        .then(() => {
-                            this.fetchStaff();
-                            this.fetchStaffOptions();
-                        });
-                },
-                deleteSchedule(id) {
-                    fetch(`api.php?entity=schedule&id=${id}`, { method: 'DELETE' })
-                        .then(() => this.fetchSchedule());
-                },
-                resetForm() {
-                    this.isEditing = false;
-                    this.editId = null;
-                    this.newJobTitle = '';
-                    this.newRate = '';
-                    this.newBonus = '';
-                    this.newDescription = '';
-                    this.newStaffScheduleId = '';
-                    this.newFullName = '';
-                    this.newDateOfHiring = '';
-                    this.newStatus = '';
-                    this.newStaffDescription = '';
-                    this.newStaffId = '';
-                    this.newCoffeeShopId = '';
-                    this.newDate = '';
-                    this.newShiftStart = '';
-                    this.newShiftEnd = '';
-                    this.newRevenue = 0;
-                },
-                cancelEdit() {
-                    this.resetForm();
-                },
+                // Метод для отображения уведомления
+                showNotification(message, type) {
+                    this.notification = message;    // Устанавливаем текст уведомления
+                    this.notificationType = type;   // Устанавливаем тип уведомления ('error' или 'success')
 
-                getCoffeeShopClass(coffeeShopId) {
-                // Присвоение разных классов в зависимости от ID Coffee Shop
-                const id = Number(coffeeShopId);
-                switch (id) {
-                    case 1:
-                        return 'bg-blue-100'; // Например, синий для Coffee Shop с ID 1
-                    case 2:
-                        return 'bg-green-100'; // Зеленый для ID 2
-                    case 3:
-                        return 'bg-yellow-100'; // Желтый для ID 3
-                    default:
-                        return 'bg-gray-100'; // Серый для остальных
-                    }
-                },
-                getCoffeeShopName(coffeeShopId) {
-                const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
-                return shop ? shop.name : '';
-                },
-                getFullName(staffId) {
-                const staff = this.staffOptions.find(s => s.id === staffId);
-                return staff ? staff.full_name : '';
+                    // Автоматически скрываем уведомление через 3 секунды
+                    setTimeout(() => {
+                        this.notification = '';
+                    }, 3000);
                 }
-
-            },
-
-            mounted() {
-                this.fetchStaffSchedule();
-                this.fetchStaff();
-                this.fetchSchedule();
-                this.fetchStaffScheduleOptions();
-                this.fetchStaffOptions();
-                this.fetchCoffeeShopOptions();
             }
-        }).mount('#app');
+        }).mount('#app'); // Монтируем приложение в элемент с id="app"
     </script>
-
-    <style>
-        .input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; margin-right: 0.5rem; }
-        .btn-primary { padding: 0.5rem 1rem; background-color: #1D4ED8; color: white; border-radius: 8px; cursor: pointer; }
-        .btn-secondary { padding: 0.5rem 1rem; background-color: #6B7280; color: white; border-radius: 8px; cursor: pointer; }
-        .btn-nav { padding: 0.5rem 1rem; border: 2px solid #1F2937; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .table-container { max-height: 400px; overflow-y: auto; }
-        .sticky-header { position: sticky; top: 0; background-color: white; z-index: 1; }
-    </style>
 </body>
 </html>
