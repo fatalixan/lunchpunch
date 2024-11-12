@@ -13,9 +13,11 @@
         
         <!-- Навигация между разделами интерфейса -->
         <nav class="flex justify-around mb-4">
+            <button @click="goToDashboard" class="btn-nav">Dashboard</button>
             <button @click="currentView = 'StaffSchedule'" class="btn-nav">Staff Schedule</button>
             <button @click="currentView = 'Staff'" class="btn-nav">Staff</button>
             <button @click="currentView = 'Schedule'" class="btn-nav">Schedule</button>
+            <button @click="currentView = 'Reports'" class="btn-nav">Reports</button>
         </nav>
         
         <!-- Раздел Staff Schedule -->
@@ -169,7 +171,40 @@
                 </table>
             </div>
         </div>
+    
+
+    <div v-if="currentView === 'Reports'">
+            <h2 class="text-xl font-semibold mb-2">Reports</h2>
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b">Full Name</th>
+                        <th class="py-2 px-4 border-b">Coffee Shop</th>
+                        <th class="py-2 px-4 border-b">Total Hours Worked</th>
+                        <th class="py-2 px-4 border-b">Total Revenue</th>
+                        <th class="py-2 px-4 border-b">Salary</th>
+                        <th class="py-2 px-4 border-b">Bonus</th>
+                        <th class="py-2 px-4 border-b">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="report in reportData" :key="report.staff_id">
+                        <td class="py-2 px-4 border-b">{{ getFullName(report.staff_id) }}</td>
+                        <td class="py-2 px-4 border-b">{{ getCoffeeShopName(report.coffee_shop_id) }}</td>
+                        <td class="py-2 px-4 border-b">{{ report.totalHoursWorked }}</td>
+                        <td class="py-2 px-4 border-b">{{ report.totalRevenue }}</td>
+                        <td class="py-2 px-4 border-b">{{ report.salary }}</td>
+                        <td class="py-2 px-4 border-b">{{ report.bonus }}</td>
+                        <td class="py-2 px-4 border-b">{{ report.totalAmount }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
+
+
+
+
 
     <script>
         const { createApp } = Vue;
@@ -177,7 +212,7 @@
         createApp({
             data() {
                 return {
-                    currentView: 'StaffSchedule',
+                    currentView: 'Schedule',
                     isEditing: false,
                     editId: null,
                     newJobTitle: '',
@@ -195,6 +230,7 @@
                     newShiftStart: '',
                     newShiftEnd: '',
                     newRevenue: 0,
+                    reportData: [],
                     schedules: [],
                     staffList: [],
                     scheduleList: [],
@@ -422,11 +458,11 @@
                 const id = Number(coffeeShopId);
                 switch (id) {
                     case 1:
-                        return 'text-red-400'; // Например, синий для Coffee Shop с ID 1
+                        return 'text-red-400'; // Красный для Coffee Shop с ID 1
                     case 2:
                         return 'text-green-400'; // Зеленый для ID 2
                     case 3:
-                        return 'text-blue-400'; // Желтый для ID 3
+                        return 'text-blue-400'; // Синий для ID 3
                     default:
                         return 'text-gray-400'; // Серый для остальных
                     }
@@ -442,15 +478,91 @@
                     );
                 },
 
+                fetchReports() {
+                    Promise.all([
+                        fetch('api.php?entity=staff').then(response => response.json()),
+                        fetch('api.php?entity=staff_schedule').then(response => response.json()),
+                        fetch('api.php?entity=schedule').then(response => response.json())
+                    ]).then(([staffData, staffScheduleData, scheduleData]) => {
+                        const scheduleRates = {};
+                        staffScheduleData.forEach(schedule => {
+                            scheduleRates[schedule.id] = {
+                                rate: parseFloat(schedule.rate) || 0,    // Приводим к числу
+                                bonus: parseFloat(schedule.bonus) || 0   // Приводим к числу
+                                };
+                            });
+                            this.generateReport(scheduleData, staffData, scheduleRates);
+                        });
+                },
+                
+                     generateReport(scheduleData, staffData, scheduleRates) {
+                        const reports = {};
+                        scheduleData.forEach(record => {
+                            const staffId = record.staff_id;
+                            const coffeeShopId = record.coffee_shop_id;
+                            const staffKey = `${staffId}-${coffeeShopId}`;
+                            
+                            if (!reports[staffKey]) {
+                                reports[staffKey] = {
+                                    staff_id: staffId,
+                                    coffee_shop_id: coffeeShopId,
+                                    totalHoursWorked: 0, 
+                                    totalRevenue: 0,
+                                    salary: 0,
+                                    bonus: 0,
+                                    totalAmount: 0
+                                };
+                            }
+                            // Рассчитываем количество отработанных часов
+                            const hoursWorked = this.calculateHours(record.shift_start, record.shift_end);
+                            reports[staffKey].totalHoursWorked += hoursWorked;
+                            reports[staffKey].totalRevenue += parseFloat(record.revenue) || 0; // Приводим выручку к числу
+                            });
+                            // Вычисляем зарплату и бонусы на основе totalHoursWorked и totalRevenue
+                            staffData.forEach(staff => {
+                                const scheduleInfo = scheduleRates[staff.staff_schedule_id];
+                                const rate = scheduleInfo ? parseFloat(scheduleInfo.rate) || 0 : 0;
+                                const bonusPercentage = scheduleInfo ? parseFloat(scheduleInfo.bonus) || 0 : 0;
+                                
+                                for (const key in reports) {
+                                    if (reports[key].staff_id === staff.id) {
+                                        const totalHours = reports[key].totalHoursWorked;
+                                        const totalRevenue = reports[key].totalRevenue;
+                                        
+                                        // Приведение к числу для расчета salary и bonus
+                                        reports[key].salary = totalHours * rate;
+                                        reports[key].bonus = (totalRevenue * bonusPercentage) / 100;
+                                        reports[key].totalAmount = reports[key].salary + reports[key].bonus;
+                                    }
+                                }
+                            });
+                            this.reportData = Object.values(reports);
+                    },
+
                 getCoffeeShopName(coffeeShopId) {
-                const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
-                return shop ? shop.name : '';
+                    const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
+                    return shop ? shop.name : '';
                 },
                 getFullName(staffId) {
                 const staff = this.staffOptions.find(s => s.id === staffId);
-                return staff ? staff.full_name : '';
+                    return staff ? staff.full_name : '';
                 },
 
+                goToDashboard() {
+                    window.location.href = 'dashboard.html';
+                },
+
+                calculateHours(shiftStart, shiftEnd) {
+                    const [startHour, startMinute] = shiftStart.split(':').map(Number);
+                    const [endHour, endMinute] = shiftEnd.split(':').map(Number);
+                    
+                    // Рассчитываем общее количество минут для начала и конца
+                    const startTotalMinutes = startHour * 60 + startMinute;
+                    const endTotalMinutes = endHour * 60 + endMinute;
+                    // Вычисляем разницу в минутах и преобразуем в часы
+                    const minutesWorked = endTotalMinutes - startTotalMinutes;
+                    return minutesWorked / 60; // Преобразование в часы
+                },
 
             },
 
@@ -461,6 +573,7 @@
                 this.fetchStaffScheduleOptions();
                 this.fetchStaffOptions();
                 this.fetchCoffeeShopOptions();
+                this.fetchReports();
             }
         }).mount('#app');
     </script>
