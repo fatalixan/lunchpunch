@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Coffee Shop Management</title>
-    <!-- Подключаем Vue.js через CDN -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3.2.33/dist/vue.global.min.js"></script>
 
     <!-- Встроенные стили -->
@@ -75,82 +74,103 @@
 </head>
 <body>
     <!-- Главный контейнер для Vue-приложения -->
-    <div id="app" class="login-container">
-        <!-- Зона уведомлений, которая показывается при ошибке или успехе -->
-        <div v-if="notification" :class="['notification', notificationType]">
-            {{ notification }}
+    <div id="app">
+        <!-- Проверка завершена, если showContent истинно -->
+        <div v-if="showContent" class="login-container">
+            <!-- Зона уведомлений -->
+            <div v-if="notification" :class="['notification', notificationType]">
+                {{ notification }}
+            </div>
+
+            <!-- Заголовок формы авторизации -->
+            <h2 class="text-xl font-bold mb-4">Login</h2>
+
+            <!-- Форма авторизации -->
+            <form @submit.prevent="login">
+                <!-- Поле ввода имени пользователя -->
+                <input v-model="username" placeholder="Username" class="input" required />
+
+                <!-- Поле ввода пароля -->
+                <input v-model="password" type="password" placeholder="Password" class="input" required />
+
+                <!-- Кнопка отправки формы -->
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
         </div>
-
-        <!-- Заголовок формы авторизации -->
-        <h2 class="text-xl font-bold mb-4">Login</h2>
-
-        <!-- Форма авторизации -->
-        <form @submit.prevent="login">
-            <!-- Поле ввода имени пользователя -->
-            <input v-model="username" placeholder="Username" class="input" required />
-
-            <!-- Поле ввода пароля -->
-            <input v-model="password" type="password" placeholder="Password" class="input" required />
-
-            <!-- Кнопка отправки формы -->
-            <button type="submit" class="btn-primary">Login</button>
-        </form>
     </div>
 
     <script>
-        // Создаем Vue-приложение
         Vue.createApp({
-            // Определяем данные приложения
             data() {
                 return {
-                    username: '',           // Имя пользователя
-                    password: '',           // Пароль
-                    notification: '',       // Сообщение уведомления
-                    notificationType: ''    // Тип уведомления (успех или ошибка)
+                    username: '',            // Имя пользователя
+                    password: '',            // Пароль
+                    notification: '',        // Сообщение уведомления
+                    notificationType: '',    // Тип уведомления (успех или ошибка)
+                    showContent: false       // Показывать ли контент после проверки
                 };
             },
-            // Определяем методы приложения
             methods: {
-                // Метод для отправки данных формы на сервер
-                login() {
-                    // Отправляем запрос на сервер для проверки авторизации
+                // Проверка авторизации при загрузке
+                checkAuth() {
                     fetch('user.php', {
-                        method: 'POST', // Используем метод POST для передачи данных
+                        method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({
-                            action: 'login',          // Действие для API
-                            username: this.username,  // Имя пользователя
-                            password: this.password   // Пароль
-                        })
+                        body: new URLSearchParams({ action: 'check_auth' })
                     })
-                    .then(response => response.json()) // Преобразуем ответ в формат JSON
+                    .then(response => response.json())
                     .then(data => {
-                        // Проверяем ответ от сервера
                         if (data.status === 'success') {
-                            // При успешной авторизации перенаправляем на страницу dashboard
+                            // Если авторизован, перенаправляем на dashboard
                             window.location.href = 'dashboard.html';
                         } else {
-                            // Если ошибка, показываем сообщение об ошибке
+                            // Если не авторизован, показываем контент для авторизации
+                            this.showContent = true;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Authorization check failed:', error);
+                        this.showContent = true; // Показать контент при ошибке
+                    });
+                },
+                // Метод для отправки данных формы на сервер
+                login() {
+                    fetch('user.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({
+                            action: 'login',
+                            username: this.username,
+                            password: this.password
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            window.location.href = 'dashboard.html';
+                        } else {
                             this.showNotification(data.message, 'error');
                         }
                     })
                     .catch(() => {
-                        // Если произошла сетевая ошибка, показываем сообщение
                         this.showNotification('Network error. Please try again.', 'error');
                     });
                 },
                 // Метод для отображения уведомления
                 showNotification(message, type) {
-                    this.notification = message;    // Устанавливаем текст уведомления
-                    this.notificationType = type;   // Устанавливаем тип уведомления ('error' или 'success')
+                    this.notification = message;
+                    this.notificationType = type;
 
-                    // Автоматически скрываем уведомление через 3 секунды
                     setTimeout(() => {
                         this.notification = '';
                     }, 3000);
                 }
+            },
+            // Выполняем проверку авторизации при монтировании компонента
+            mounted() {
+                this.checkAuth();
             }
-        }).mount('#app'); // Монтируем приложение в элемент с id="app"
+        }).mount('#app');
     </script>
 </body>
 </html>

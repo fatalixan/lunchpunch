@@ -150,7 +150,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="schedule in scheduleList" :key="schedule.id">
+                        <tr v-for="schedule in scheduleList" :key="schedule.id" :class="{'bg-red-100': isToday(schedule.date)}">
                             <td class="py-2 px-4 border-b">{{ schedule.date }}</td>
                             <td class="py-2 px-4 border-b">{{ getFullName(schedule.staff_id) }}</td>
                             <!-- Ячейка Coffee Shop с динамическим классом цвета -->
@@ -217,7 +217,7 @@
                 fetchSchedule() {
                     fetch('api.php?entity=schedule')
                         .then(response => response.json())
-                        .then(data => { this.scheduleList = data; });
+                        .then(data => { this.scheduleList = this.scheduleList = data.sort((a, b) => new Date(b.date) - new Date(a.date));   });
                 },
                 fetchStaffScheduleOptions() {
                     fetch('api.php?entity=staff_schedule')
@@ -422,15 +422,26 @@
                 const id = Number(coffeeShopId);
                 switch (id) {
                     case 1:
-                        return 'bg-blue-100'; // Например, синий для Coffee Shop с ID 1
+                        return 'text-red-400'; // Например, синий для Coffee Shop с ID 1
                     case 2:
-                        return 'bg-green-100'; // Зеленый для ID 2
+                        return 'text-green-400'; // Зеленый для ID 2
                     case 3:
-                        return 'bg-yellow-100'; // Желтый для ID 3
+                        return 'text-blue-400'; // Желтый для ID 3
                     default:
-                        return 'bg-gray-100'; // Серый для остальных
+                        return 'text-gray-400'; // Серый для остальных
                     }
                 },
+
+                isToday(date) {
+                    const today = new Date();
+                    const recordDate = new Date(date);
+                    return (
+                        recordDate.getDate() === today.getDate() &&
+                        recordDate.getMonth() === today.getMonth() &&
+                        recordDate.getFullYear() === today.getFullYear()
+                    );
+                },
+
                 getCoffeeShopName(coffeeShopId) {
                 const shop = this.coffeeShopOptions.find(s => s.id === coffeeShopId);
                 return shop ? shop.name : '';
@@ -438,7 +449,8 @@
                 getFullName(staffId) {
                 const staff = this.staffOptions.find(s => s.id === staffId);
                 return staff ? staff.full_name : '';
-                }
+                },
+
 
             },
 
