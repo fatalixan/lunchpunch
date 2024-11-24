@@ -1,8 +1,9 @@
 <?php
 
+header("Content-Type: application/json");
+
 require 'database.php';
 
-header("Content-Type: application/json");
 
 // Получаем метод запроса и параметры
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -28,6 +29,14 @@ switch ($entity) {
     case 'coffee_shop':  // Новый блок для работы с CoffeeShop
         handleCoffeeShop($requestMethod, $pdo, $id);
         break;
+
+    case 'projects':
+        handleProjects($method, $pdo, $id);
+        break;
+    case 'tasks':
+        handleTasks($method, $pdo, $id);
+        break;
+
     default:
         echo json_encode(["error" => "Invalid entity specified"]);
 }
@@ -151,4 +160,71 @@ function handleCoffeeShop($method, $pdo, $id) {
             echo json_encode(["error" => "Method not allowed"]);
     }
 }
+
+// Функция для обработки запросов к таблице Projects
+function handleProjects($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            if ($id) {
+                $stmt = $pdo->prepare("SELECT * FROM Projects WHERE id = ?");
+                $stmt->execute([$id]);
+                echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
+            } else {
+                $stmt = $pdo->query("SELECT * FROM Projects");
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            }
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO Projects (name, description, start_date, end_date, status) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$data['name'], $data['description'], $data['start_date'], $data['end_date'], $data['status']]);
+            echo json_encode(['id' => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE Projects SET name = ?, description = ?, start_date = ?, end_date = ?, status = ? WHERE id = ?");
+            $stmt->execute([$data['name'], $data['description'], $data['start_date'], $data['end_date'], $data['status'], $id]);
+            echo json_encode(['status' => 'success']);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM Projects WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(['status' => 'success']);
+            break;
+    }
+}
+
+// Функция для обработки запросов к таблице Tasks
+function handleTasks($method, $pdo, $id) {
+    switch ($method) {
+        case 'GET':
+            if ($id) {
+                $stmt = $pdo->prepare("SELECT * FROM Tasks WHERE id = ?");
+                $stmt->execute([$id]);
+                echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
+            } else {
+                $stmt = $pdo->query("SELECT * FROM Tasks");
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            }
+            break;
+        case 'POST':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("INSERT INTO Tasks (project_id, staff_id, title, description, start_date, due_date, status, priority) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['project_id'], $data['staff_id'], $data['title'], $data['description'], $data['start_date'], $data['due_date'], $data['status'], $data['priority']]);
+            echo json_encode(['id' => $pdo->lastInsertId()]);
+            break;
+        case 'PUT':
+            $data = json_decode(file_get_contents("php://input"), true);
+            $stmt = $pdo->prepare("UPDATE Tasks SET project_id = ?, staff_id = ?, title = ?, description = ?, start_date = ?, due_date = ?, status = ?, priority = ? WHERE id = ?");
+            $stmt->execute([$data['project_id'], $data['staff_id'], $data['title'], $data['description'], $data['start_date'], $data['due_date'], $data['status'], $data['priority'], $id]);
+            echo json_encode(['status' => 'success']);
+            break;
+        case 'DELETE':
+            $stmt = $pdo->prepare("DELETE FROM Tasks WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(['status' => 'success']);
+            break;
+    }
+}
+
 ?>
