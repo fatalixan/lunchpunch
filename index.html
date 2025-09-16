@@ -1,176 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Coffee Shop Management</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.33/dist/vue.global.min.js"></script>
-
-    <!-- Встроенные стили -->
-    <style>
-        /* Основные стили для страницы */
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f3f4f6;
-            margin: 0;
-        }
-
-        /* Контейнер для формы авторизации */
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 2rem;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        /* Поля ввода */
-        .input {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-
-        /* Кнопка отправки формы */
-        .btn-primary {
-            padding: 0.5rem 1rem;
-            background-color: #1D4ED8;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-        }
-
-        /* Стиль для зоны уведомлений */
-        .notification {
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        /* Цвет уведомления об ошибке */
-        .notification.error {
-            background-color: #f56565;
-            color: white;
-        }
-
-        /* Цвет уведомления об успешном действии */
-        .notification.success {
-            background-color: #48bb78;
-            color: white;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Restaurant DB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <!-- Главный контейнер для Vue-приложения -->
-    <div id="app">
-        <!-- Проверка завершена, если showContent истинно -->
-        <div v-if="showContent" class="login-container">
-            <!-- Зона уведомлений -->
-            <div v-if="notification" :class="['notification', notificationType]">
-                {{ notification }}
-            </div>
+<body class="bg-gray-100 min-h-screen p-6">
 
-            <!-- Заголовок формы авторизации -->
-            <h2 class="text-xl font-bold mb-4">Login</h2>
+  <!-- Уведомления -->
+  <div id="notifyBox" class="fixed top-4 right-4 hidden px-4 py-2 rounded shadow-lg"></div>
 
-            <!-- Форма авторизации -->
-            <form @submit.prevent="login">
-                <!-- Поле ввода имени пользователя -->
-                <input v-model="username" placeholder="Username" class="input" required />
+  <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-4">📋 Restaurant Database Manager</h1>
 
-                <!-- Поле ввода пароля -->
-                <input v-model="password" type="password" placeholder="Password" class="input" required />
-
-                <!-- Кнопка отправки формы -->
-                <button type="submit" class="btn-primary">Login</button>
-            </form>
-        </div>
+    <!-- Выбор таблицы -->
+    <div class="mb-4">
+      <label class="font-semibold">Выберите таблицу:</label>
+      <select id="tableSelect" class="border p-2 rounded">
+        <option value="Supplier">Supplier</option>
+        <option value="Category">Category</option>
+        <option value="Product">Product</option>
+        <option value="MeasurementUnit">MeasurementUnit</option>
+        <option value="ProductItem">ProductItem</option>
+        <option value="Recipes">Recipes</option>
+        <option value="SeasonMenu">SeasonMenu</option>
+      </select>
+      <button onclick="loadData()" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded">Загрузить</button>
     </div>
 
-    <script>
-        Vue.createApp({
-            data() {
-                return {
-                    username: '',            // Имя пользователя
-                    password: '',            // Пароль
-                    notification: '',        // Сообщение уведомления
-                    notificationType: '',    // Тип уведомления (успех или ошибка)
-                    showContent: false       // Показывать ли контент после проверки
-                };
-            },
-            methods: {
-                // Проверка авторизации при загрузке
-                checkAuth() {
-                    fetch('user.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({ action: 'check_auth' })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            // Если авторизован, перенаправляем на dashboard
-                            window.location.href = 'dashboard.html';
-                        } else {
-                            // Если не авторизован, показываем контент для авторизации
-                            this.showContent = true;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Authorization check failed:', error);
-                        this.showContent = true; // Показать контент при ошибке
-                    });
-                },
-                // Метод для отправки данных формы на сервер
-                login() {
-                    fetch('user.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({
-                            action: 'login',
-                            username: this.username,
-                            password: this.password
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            window.location.href = 'dashboard.html';
-                        } else {
-                            this.showNotification(data.message, 'error');
-                        }
-                    })
-                    .catch(() => {
-                        this.showNotification('Network error. Please try again.', 'error');
-                    });
-                },
-                // Метод для отображения уведомления
-                showNotification(message, type) {
-                    this.notification = message;
-                    this.notificationType = type;
+    <!-- Таблица -->
+    <table id="dataTable" class="table-auto w-full border-collapse border border-gray-300">
+      <thead class="bg-gray-200"></thead>
+      <tbody></tbody>
+    </table>
 
-                    setTimeout(() => {
-                        this.notification = '';
-                    }, 3000);
-                }
-            },
-            // Выполняем проверку авторизации при монтировании компонента
-            mounted() {
-                this.checkAuth();
-            }
-        }).mount('#app');
-    </script>
+    <!-- Форма -->
+    <div id="formContainer" class="mt-6 p-4 border rounded bg-gray-50 hidden">
+      <h2 class="text-xl font-semibold mb-2" id="formTitle">Добавить запись</h2>
+      <form id="recordForm" class="space-y-3"></form>
+      <button onclick="submitForm()" class="bg-green-500 text-white px-4 py-2 rounded">Сохранить</button>
+      <button onclick="cancelForm()" class="ml-2 bg-gray-500 text-white px-4 py-2 rounded">Отмена</button>
+    </div>
+  </div>
+
+<script>
+let currentTable = "";
+let editId = null;
+let currentHeaders = [];
+
+function notify(msg, type="success") {
+  const box = document.getElementById("notifyBox");
+  box.innerText = msg;
+  box.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white ${
+    type==="success" ? "bg-green-500" : "bg-red-500"
+  }`;
+  box.classList.remove("hidden");
+  setTimeout(() => box.classList.add("hidden"), 2500);
+}
+
+async function loadData() {
+  currentTable = document.getElementById("tableSelect").value;
+  const res = await fetch(`api.php?table=${currentTable}&action=list`);
+  const data = await res.json();
+
+  const thead = document.querySelector("#dataTable thead");
+  const tbody = document.querySelector("#dataTable tbody");
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td class="p-2 text-center" colspan="5">Нет данных</td></tr>`;
+    return;
+  }
+
+  currentHeaders = Object.keys(data[0]).filter(h => h !== "created_at" && h !== "updated_at");
+  thead.innerHTML = `<tr>${currentHeaders.map(h => `<th class="border px-3 py-2">${h}</th>`).join("")}<th>Действия</th></tr>`;
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.setAttribute("id", `row_${row.ID}`);
+    tr.innerHTML = currentHeaders.map(h => `<td class="border px-3 py-2">${row[h]}</td>`).join("")
+      + `<td class="border px-3 py-2">
+          <button onclick="showForm('edit', ${row.ID})" class="bg-yellow-500 text-white px-2 py-1 rounded">Редакт</button>
+          <button onclick="deleteRow('${currentTable}', ${row.ID})" class="ml-1 bg-red-500 text-white px-2 py-1 rounded">Удалить</button>
+        </td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Добавить запись
+  const addRow = document.createElement("tr");
+  addRow.innerHTML = `<td colspan="${currentHeaders.length + 1}" class="p-2 text-center">
+    <button onclick="showForm('create')" class="bg-blue-600 text-white px-4 py-2 rounded">Добавить запись</button>
+  </td>`;
+  tbody.appendChild(addRow);
+}
+
+function showForm(mode, id = null) {
+  editId = id;
+  const form = document.getElementById("recordForm");
+  form.innerHTML = "";
+  document.getElementById("formTitle").innerText = mode === "create" ? "Добавить запись" : "Редактировать запись";
+
+  currentHeaders.forEach(h => {
+    if (h === "ID") return;
+    form.innerHTML += `
+      <div>
+        <label class="block font-medium">${h}</label>
+        <input type="text" id="field_${h}" class="border w-full p-2 rounded" />
+      </div>
+    `;
+  });
+
+  document.getElementById("formContainer").classList.remove("hidden");
+
+  if (mode === "edit" && id) {
+    fetch(`api.php?table=${currentTable}&action=list`)
+      .then(res => res.json())
+      .then(rows => {
+        const row = rows.find(r => r.ID == id);
+        currentHeaders.forEach(h => {
+          if (h !== "ID") document.getElementById("field_" + h).value = row[h] ?? "";
+        });
+        document.querySelectorAll("tr").forEach(tr => tr.classList.remove("bg-yellow-100"));
+        document.getElementById(`row_${id}`).classList.add("bg-yellow-100");
+      });
+  }
+}
+
+async function submitForm() {
+  const data = {};
+  currentHeaders.forEach(h => {
+    if (h !== "ID") {
+      data[h] = document.getElementById("field_" + h).value;
+    }
+  });
+
+  try {
+    if (editId) {
+      await fetch(`api.php?table=${currentTable}&action=update&id=${editId}`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      notify("Запись обновлена!");
+    } else {
+      await fetch(`api.php?table=${currentTable}&action=create`, {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      notify("Запись добавлена!");
+    }
+  } catch (e) {
+    notify("Ошибка при сохранении", "error");
+  }
+
+  cancelForm();
+  loadData();
+}
+
+function cancelForm() {
+  document.getElementById("formContainer").classList.add("hidden");
+  editId = null;
+  document.querySelectorAll("tr").forEach(tr => tr.classList.remove("bg-yellow-100"));
+}
+
+async function deleteRow(table, id) {
+  if (!confirm("Удалить запись?")) return;
+  await fetch(`api.php?table=${table}&action=delete&id=${id}`);
+  notify("Запись удалена!");
+  loadData();
+}
+
+// Автозагрузка первой таблицы при открытии
+window.onload = () => loadData();
+</script>
+
 </body>
 </html>

@@ -1,21 +1,15 @@
 <?php
-// database.php
+$host = "localhost";
+$dbname = "c90922_dalbadabl_ru";
+$username = "c90922_dalbadabl_ru";
+$password = "KuCfoFupzojuj41"; // поменяй на свой пароль
 
-function connectDatabase() {
-    // Параметры подключения к базе данных
-    $host = 'localhost';
-    $dbname = 'c90922_dalbadabl_ru';
-    $user = 'c90922_dalbadabl_ru'; // замените на имя пользователя вашей базы данных
-    $password = 'KuCfoFupzojuj41'; // замените на пароль вашей базы данных
-
-    try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $pdo;
-    } catch (PDOException $e) {
-        // Ошибка подключения
-        echo json_encode(["error" => "Database connection failed: " . $e->getMessage()]);
-        exit();
-    }
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(["error" => "DB connection failed: " . $e->getMessage()]);
+    exit;
 }
 ?>
