@@ -14,8 +14,8 @@
     <h1 class="text-2xl font-bold mb-4">📋 Restaurant Database Manager</h1>
 
     <!-- Выбор таблицы -->
-    <div class="mb-4">
-      <label class="font-semibold">Выберите таблицу:</label>
+    <div class="mb-4 flex items-center gap-2">
+      <label class="font-semibold">Таблица:</label>
       <select id="tableSelect" class="border p-2 rounded">
         <option value="Supplier">Supplier</option>
         <option value="Category">Category</option>
@@ -26,6 +26,12 @@
         <option value="SeasonMenu">SeasonMenu</option>
       </select>
       <button onclick="loadData()" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded">Загрузить</button>
+    </div>
+
+    <!-- Поиск -->
+    <div class="mb-4">
+      <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Поиск..." 
+             class="w-full border p-2 rounded" />
     </div>
 
     <!-- Таблица -->
@@ -47,6 +53,7 @@
 let currentTable = "";
 let editId = null;
 let currentHeaders = [];
+let loadedData = []; // сохраняем загруженные данные для фильтрации
 
 function notify(msg, type="success") {
   const box = document.getElementById("notifyBox");
@@ -61,8 +68,11 @@ function notify(msg, type="success") {
 async function loadData() {
   currentTable = document.getElementById("tableSelect").value;
   const res = await fetch(`api.php?table=${currentTable}&action=list`);
-  const data = await res.json();
+  loadedData = await res.json(); // сохраним все данные
+  renderTable(loadedData);
+}
 
+function renderTable(data) {
   const thead = document.querySelector("#dataTable thead");
   const tbody = document.querySelector("#dataTable tbody");
   thead.innerHTML = "";
@@ -87,12 +97,19 @@ async function loadData() {
     tbody.appendChild(tr);
   });
 
-  // Добавить запись
   const addRow = document.createElement("tr");
   addRow.innerHTML = `<td colspan="${currentHeaders.length + 1}" class="p-2 text-center">
     <button onclick="showForm('create')" class="bg-blue-600 text-white px-4 py-2 rounded">Добавить запись</button>
   </td>`;
   tbody.appendChild(addRow);
+}
+
+function filterTable() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = loadedData.filter(row =>
+    Object.values(row).some(v => (v+"").toLowerCase().includes(query))
+  );
+  renderTable(filtered);
 }
 
 function showForm(mode, id = null) {
@@ -114,16 +131,12 @@ function showForm(mode, id = null) {
   document.getElementById("formContainer").classList.remove("hidden");
 
   if (mode === "edit" && id) {
-    fetch(`api.php?table=${currentTable}&action=list`)
-      .then(res => res.json())
-      .then(rows => {
-        const row = rows.find(r => r.ID == id);
-        currentHeaders.forEach(h => {
-          if (h !== "ID") document.getElementById("field_" + h).value = row[h] ?? "";
-        });
-        document.querySelectorAll("tr").forEach(tr => tr.classList.remove("bg-yellow-100"));
-        document.getElementById(`row_${id}`).classList.add("bg-yellow-100");
-      });
+    const row = loadedData.find(r => r.ID == id);
+    currentHeaders.forEach(h => {
+      if (h !== "ID") document.getElementById("field_" + h).value = row[h] ?? "";
+    });
+    document.querySelectorAll("tr").forEach(tr => tr.classList.remove("bg-yellow-100"));
+    document.getElementById(`row_${id}`).classList.add("bg-yellow-100");
   }
 }
 
@@ -170,7 +183,6 @@ async function deleteRow(table, id) {
   loadData();
 }
 
-// Автозагрузка первой таблицы при открытии
 window.onload = () => loadData();
 </script>
 
