@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <title>Restaurant DB</title>
@@ -16,15 +16,7 @@
     <!-- Выбор таблицы -->
     <div class="mb-4 flex items-center gap-2">
       <label class="font-semibold">Таблица:</label>
-      <select id="tableSelect" class="border p-2 rounded">
-        <option value="Supplier">Supplier</option>
-        <option value="Category">Category</option>
-        <option value="Product">Product</option>
-        <option value="MeasurementUnit">MeasurementUnit</option>
-        <option value="ProductItem">ProductItem</option>
-        <option value="Recipes">Recipes</option>
-        <option value="SeasonMenu">SeasonMenu</option>
-      </select>
+      <select id="tableSelect" class="border p-2 rounded"></select>
       <button onclick="loadData()" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded">Загрузить</button>
     </div>
 
@@ -50,10 +42,42 @@
   </div>
 
 <script>
+// ====================
+// Словарь соответствий:
+// Supplier        -> Поставщики
+// Category        -> Категории
+// Product         -> Ингредиенты
+// MeasurementUnit -> Единицы измерения
+// ProductItem     -> Продукция
+// Recipes         -> Рецепты
+// SeasonMenu      -> Сезонное меню
+// ====================
+
+const tableNames = {
+  Supplier: "Поставщики",
+  Category: "Категории",
+  Product: "Ингредиенты",
+  MeasurementUnit: "Единицы измерения",
+  ProductItem: "Продукция",
+  Recipes: "Рецепты",
+  SeasonMenu: "Сезонное меню"
+};
+
 let currentTable = "";
 let editId = null;
 let currentHeaders = [];
-let loadedData = []; // сохраняем загруженные данные для фильтрации
+let loadedData = [];
+
+function initTableSelect() {
+  const select = document.getElementById("tableSelect");
+  select.innerHTML = "";
+  Object.keys(tableNames).forEach(tbl => {
+    const opt = document.createElement("option");
+    opt.value = tbl;
+    opt.textContent = tableNames[tbl];
+    select.appendChild(opt);
+  });
+}
 
 function notify(msg, type="success") {
   const box = document.getElementById("notifyBox");
@@ -68,7 +92,7 @@ function notify(msg, type="success") {
 async function loadData() {
   currentTable = document.getElementById("tableSelect").value;
   const res = await fetch(`api.php?table=${currentTable}&action=list`);
-  loadedData = await res.json(); // сохраним все данные
+  loadedData = await res.json();
   renderTable(loadedData);
 }
 
@@ -183,7 +207,11 @@ async function deleteRow(table, id) {
   loadData();
 }
 
-window.onload = () => loadData();
+// Автозагрузка первой таблицы
+window.onload = () => {
+  initTableSelect();
+  loadData();
+};
 </script>
 
 </body>
